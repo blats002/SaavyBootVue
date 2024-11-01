@@ -1,0 +1,28 @@
+services:
+  mysql:
+    image: 'mysql:8.0'
+    container_name: mysql-container
+    environment:
+      - 'MYSQL_DATABASE=saavy_db'
+      - 'MYSQL_PASSWORD=Tinals00a'
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_USER=mabelLocal'
+    ports:
+      - '33306:3306'
+    volumes:
+      - 'mysql_data:/var/lib/mysql'
+  springboot:
+    build:
+        context: .
+    container_name: springboot-container
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/saavy_db
+      SPRING_DATASOURCE_USERNAME: mabelLocal
+      SPRING_DATASOURCE_PASSWORD: Tinals00a
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mysql
+volumes:
+  mysql_data:
+
