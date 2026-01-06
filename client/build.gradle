@@ -30,3 +30,9 @@ task lint(type: NpmTask) {
     description = 'Run eslint'
     args = ['run', 'lint']
 }
+
+task audit(type: NpmTask) {
+    group = 'build'
+    description = 'Run eslint'
+    args = ['audit', 'fix']
+}
