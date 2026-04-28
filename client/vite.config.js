@@ -11,11 +11,10 @@ export default defineConfig(() => {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url))
             }
+        },
+        build: {
+            target: 'esnext'
         }
-        // ,
-        // build: {
-        //  assetsDir: 'myAssets' // Add this line
-        // }
     };
 });
 
