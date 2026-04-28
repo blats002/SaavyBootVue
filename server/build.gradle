@@ -55,17 +55,12 @@ tasks.register('cleanFrontEnd', Delete) {
 }
 
 tasks.register('copyFrontend', Copy) {
-    mustRunAfter processResources
     dependsOn ':client:audit', ':client:build', cleanFrontEnd
     from('../client/dist')
     into('src/main/resources/static')
 }
 
-bootRun{
-    dependsOn copyFrontend
-}
-
-bootJar{
+processResources{
     dependsOn copyFrontend
 }
 
@@ -79,77 +74,77 @@ def liquibaseDriver = 'org.h2.Driver'
 
 def liquibaseReferenceUrl = 'hibernate:spring:org.saavy?dialect=org.hibernate.dialect.H2Dialect'
 
-tasks.register('liquibaseUpdate', JavaExec) {
-    group = 'liquibase'
-    description = 'Runs Liquibase update to apply pending changesets'
-
-    classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
-    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-
-    args(
-            "--search-path=${liquibaseSearchPath}",
-            "--changeLogFile=${liquibaseChangeLogFile}",
-            "--url=${liquibaseUrl}",
-            "--username=${liquibaseUsername}",
-            "--password=${liquibasePassword}",
-            "--driver=${liquibaseDriver}",
-            'update'
-    )
-}
-
-tasks.register('liquibaseStatus', JavaExec) {
-    group = 'liquibase'
-    description = 'Shows pending Liquibase changesets'
-
-    classpath = configurations.liquibaseRuntime
-    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-
-    args(
-            "--search-path=${liquibaseSearchPath}",
-            "--changeLogFile=${liquibaseChangeLogFile}",
-            "--url=${liquibaseUrl}",
-            "--username=${liquibaseUsername}",
-            "--password=${liquibasePassword}",
-            "--driver=${liquibaseDriver}",
-            'status'
-    )
-}
-
-tasks.register('liquibaseDiffChangeLog', JavaExec) {
-    group = 'liquibase'
-    description = 'Shows pending Liquibase changesets'
-
-    classpath = configurations.liquibaseRuntime
-    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-
-    args(
-            "--search-path=${liquibaseSearchPath}",
-            "--changeLogFile=${liquibaseChangeLogFile}",
-            "--url=${liquibaseUrl}",
-            "--username=${liquibaseUsername}",
-            "--password=${liquibasePassword}",
-            "--driver=${liquibaseDriver}",
-            'diffChangeLog'
-    )
-}
-
-tasks.register('liquibaseUpdateSql', JavaExec) {
-    group = 'liquibase'
-    description = 'Prints the SQL Liquibase would run without applying it'
-
-    classpath = configurations.liquibaseRuntime
-    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-
-    args(
-            "--search-path=${liquibaseSearchPath}",
-            "--changeLogFile=${liquibaseChangeLogFile}",
-            "--url=${liquibaseUrl}",
-            "--username=${liquibaseUsername}",
-            "--password=${liquibasePassword}",
-            "--driver=${liquibaseDriver}",
-            'updateSql'
-    )
-}
+//tasks.register('liquibaseUpdate', JavaExec) {
+//    group = 'liquibase'
+//    description = 'Runs Liquibase update to apply pending changesets'
+//
+//    classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
+//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+//
+//    args(
+//            "--search-path=${liquibaseSearchPath}",
+//            "--changeLogFile=${liquibaseChangeLogFile}",
+//            "--url=${liquibaseUrl}",
+//            "--username=${liquibaseUsername}",
+//            "--password=${liquibasePassword}",
+//            "--driver=${liquibaseDriver}",
+//            'update'
+//    )
+//}
+//
+//tasks.register('liquibaseStatus', JavaExec) {
+//    group = 'liquibase'
+//    description = 'Shows pending Liquibase changesets'
+//
+//    classpath = configurations.liquibaseRuntime
+//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+//
+//    args(
+//            "--search-path=${liquibaseSearchPath}",
+//            "--changeLogFile=${liquibaseChangeLogFile}",
+//            "--url=${liquibaseUrl}",
+//            "--username=${liquibaseUsername}",
+//            "--password=${liquibasePassword}",
+//            "--driver=${liquibaseDriver}",
+//            'status'
+//    )
+//}
+//
+//tasks.register('liquibaseDiffChangeLog', JavaExec) {
+//    group = 'liquibase'
+//    description = 'Shows pending Liquibase changesets'
+//
+//    classpath = configurations.liquibaseRuntime
+//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+//
+//    args(
+//            "--search-path=${liquibaseSearchPath}",
+//            "--changeLogFile=${liquibaseChangeLogFile}",
+//            "--url=${liquibaseUrl}",
+//            "--username=${liquibaseUsername}",
+//            "--password=${liquibasePassword}",
+//            "--driver=${liquibaseDriver}",
+//            'diffChangeLog'
+//    )
+//}
+//
+//tasks.register('liquibaseUpdateSql', JavaExec) {
+//    group = 'liquibase'
+//    description = 'Prints the SQL Liquibase would run without applying it'
+//
+//    classpath = configurations.liquibaseRuntime
+//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+//
+//    args(
+//            "--search-path=${liquibaseSearchPath}",
+//            "--changeLogFile=${liquibaseChangeLogFile}",
+//            "--url=${liquibaseUrl}",
+//            "--username=${liquibaseUsername}",
+//            "--password=${liquibasePassword}",
+//            "--driver=${liquibaseDriver}",
+//            'updateSql'
+//    )
+//}
 
 tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
     group = 'liquibase'
