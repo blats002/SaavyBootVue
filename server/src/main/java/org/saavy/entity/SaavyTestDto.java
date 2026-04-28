@@ -9,10 +9,16 @@ import java.util.Objects;
 public class SaavyTestDto implements Serializable {
     private final Long id;
     private final String text1;
+    private final Integer count;
+    private final String name;
 
-    public SaavyTestDto(Long id, String text1) {
+    public SaavyTestDto(Long id, String text1,
+                        Integer count,
+                        String name) {
         this.id = id;
         this.text1 = text1;
+        this.count = count;
+        this.name = name;
     }
 
     public Long getId() {
@@ -42,5 +48,13 @@ public class SaavyTestDto implements Serializable {
         return getClass().getSimpleName() + "(" +
                 "id = " + id + ", " +
                 "text1 = " + text1 + ")";
+    }
+
+    public Integer getCount() {
+        return count;
+    }
+
+    public String getName() {
+        return name;
     }
 }

@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.liquibase.gradle' version '2.2.2'
 }
 
 group = 'org.saavy'
@@ -31,24 +32,32 @@ dependencies {
 //    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
     runtimeOnly 'com.mysql:mysql-connector-j'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    runtimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    liquibaseRuntime 'org.liquibase:liquibase-core'
+    liquibaseRuntime 'org.liquibase.ext:liquibase-hibernate6:4.31.1'
+    liquibaseRuntime 'org.springframework.boot:spring-boot-starter'
+    liquibaseRuntime "org.springframework.boot:spring-boot-starter-data-jpa"
+    liquibaseRuntime 'com.h2database:h2'
+    liquibaseRuntime 'info.picocli:picocli:4.7.5'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-task cleanFrontEnd(type: Delete){
+tasks.register('cleanFrontEnd', Delete) {
     delete fileTree(dir: 'src/main/resources/static', include: '**/*')
 }
 
-task copyFrontend(type: Copy){
+tasks.register('copyFrontend', Copy) {
     mustRunAfter processResources
-    dependsOn ':client:build', cleanFrontEnd
-    from('client/dist')
+    dependsOn ':client:audit', ':client:build', cleanFrontEnd
+    from('../client/dist')
     into('src/main/resources/static')
 }
 
@@ -58,4 +67,108 @@ bootRun{
 
 bootJar{
     dependsOn copyFrontend
+}
+
+def liquibaseDiffChangeLogFile = 'src/main/resources/db/changelog/generated-jpa-diff-changelog.xml'
+def liquibaseChangeLogFile = 'src/main/resources/db/changelog/db.changelog-master.xml'
+def liquibaseSearchPath = "${projectDir},${projectDir}/src/main/resources"
+def liquibaseUrl = "jdbc:h2:file:./build/data/saavy_db"
+def liquibaseUsername = 'sa'
+def liquibasePassword = ''
+def liquibaseDriver = 'org.h2.Driver'
+
+def liquibaseReferenceUrl = 'hibernate:spring:org.saavy?dialect=org.hibernate.dialect.H2Dialect'
+
+tasks.register('liquibaseUpdate', JavaExec) {
+    group = 'liquibase'
+    description = 'Runs Liquibase update to apply pending changesets'
+
+    classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    args(
+            "--search-path=${liquibaseSearchPath}",
+            "--changeLogFile=${liquibaseChangeLogFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            'update'
+    )
+}
+
+tasks.register('liquibaseStatus', JavaExec) {
+    group = 'liquibase'
+    description = 'Shows pending Liquibase changesets'
+
+    classpath = configurations.liquibaseRuntime
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    args(
+            "--search-path=${liquibaseSearchPath}",
+            "--changeLogFile=${liquibaseChangeLogFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            'status'
+    )
+}
+
+tasks.register('liquibaseDiffChangeLog', JavaExec) {
+    group = 'liquibase'
+    description = 'Shows pending Liquibase changesets'
+
+    classpath = configurations.liquibaseRuntime
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    args(
+            "--search-path=${liquibaseSearchPath}",
+            "--changeLogFile=${liquibaseChangeLogFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            'diffChangeLog'
+    )
+}
+
+tasks.register('liquibaseUpdateSql', JavaExec) {
+    group = 'liquibase'
+    description = 'Prints the SQL Liquibase would run without applying it'
+
+    classpath = configurations.liquibaseRuntime
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    args(
+            "--search-path=${liquibaseSearchPath}",
+            "--changeLogFile=${liquibaseChangeLogFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            'updateSql'
+    )
+}
+
+tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
+    group = 'liquibase'
+    description = 'Generates a Liquibase changelog from the current database'
+    dependsOn classes
+
+    classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
+
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    args(
+            "--log-level=debug",
+            "--search-path=${liquibaseSearchPath}",
+            "--changeLogFile=${liquibaseDiffChangeLogFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            "--referenceUrl=${liquibaseReferenceUrl}",
+            'diffChangeLog'
+    )
 }

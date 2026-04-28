@@ -1,2 +1,2 @@
-rootProject.name = 'SpringBootVue'
+rootProject.name = 'SaavySpringBootVue'
 include 'client', 'server'
