@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '3.5.14'
     id 'io.spring.dependency-management' version '1.1.6'
     id 'org.liquibase.gradle' version '2.2.2'
 }
@@ -14,11 +14,6 @@ java {
     }
 }
 
-dependencyManagement {
-    imports {
-        mavenBom 'org.springframework:spring-framework-bom:6.2.15'
-    }
-}
 
 repositories {
     mavenCentral()
@@ -28,9 +23,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.liquibase:liquibase-core'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:3.5.14'
 //    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     runtimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -42,7 +38,7 @@ dependencies {
     liquibaseRuntime 'org.liquibase.ext:liquibase-hibernate6:4.31.1'
     liquibaseRuntime 'org.springframework.boot:spring-boot-starter'
     liquibaseRuntime "org.springframework.boot:spring-boot-starter-data-jpa"
-    liquibaseRuntime 'com.h2database:h2'
+    liquibaseRuntime 'org.postgresql:postgresql'
     liquibaseRuntime 'info.picocli:picocli:4.7.5'
 }
 
@@ -60,91 +56,102 @@ tasks.register('copyFrontend', Copy) {
     into('src/main/resources/static')
 }
 
+tasks.register('frontendHotDeploy', Copy) {
+    dependsOn ':client:audit', ':client:build', cleanFrontEnd
+    from('../client/dist')
+    into('build/resources/main/static')
+}
+
 processResources{
     dependsOn copyFrontend
+}
+
+// Configure bootRun task to use development profile
+bootRun {
+    args = ['--spring.profiles.active=development']
 }
 
 def liquibaseDiffChangeLogFile = 'src/main/resources/db/changelog/generated-jpa-diff-changelog.xml'
 def liquibaseChangeLogFile = 'src/main/resources/db/changelog/db.changelog-master.xml'
 def liquibaseSearchPath = "${projectDir},${projectDir}/src/main/resources"
-def liquibaseUrl = "jdbc:h2:file:./build/data/saavy_db"
-def liquibaseUsername = 'sa'
-def liquibasePassword = ''
-def liquibaseDriver = 'org.h2.Driver'
+def liquibaseUrl = "jdbc:postgresql://localhost:5432/saavy_db"
+def liquibaseUsername = 'postgres'
+def liquibasePassword = 'password'
+def liquibaseDriver = 'org.postgresql.Driver'
 
-def liquibaseReferenceUrl = 'hibernate:spring:org.saavy?dialect=org.hibernate.dialect.H2Dialect'
+def liquibaseReferenceUrl = 'hibernate:spring:org.saavy?dialect=org.hibernate.dialect.PostgreSQLDialect'
 
-//tasks.register('liquibaseUpdate', JavaExec) {
-//    group = 'liquibase'
-//    description = 'Runs Liquibase update to apply pending changesets'
-//
-//    classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
-//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-//
-//    args(
-//            "--search-path=${liquibaseSearchPath}",
-//            "--changeLogFile=${liquibaseChangeLogFile}",
-//            "--url=${liquibaseUrl}",
-//            "--username=${liquibaseUsername}",
-//            "--password=${liquibasePassword}",
-//            "--driver=${liquibaseDriver}",
-//            'update'
-//    )
-//}
-//
-//tasks.register('liquibaseStatus', JavaExec) {
-//    group = 'liquibase'
-//    description = 'Shows pending Liquibase changesets'
-//
-//    classpath = configurations.liquibaseRuntime
-//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-//
-//    args(
-//            "--search-path=${liquibaseSearchPath}",
-//            "--changeLogFile=${liquibaseChangeLogFile}",
-//            "--url=${liquibaseUrl}",
-//            "--username=${liquibaseUsername}",
-//            "--password=${liquibasePassword}",
-//            "--driver=${liquibaseDriver}",
-//            'status'
-//    )
-//}
-//
-//tasks.register('liquibaseDiffChangeLog', JavaExec) {
-//    group = 'liquibase'
-//    description = 'Shows pending Liquibase changesets'
-//
-//    classpath = configurations.liquibaseRuntime
-//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-//
-//    args(
-//            "--search-path=${liquibaseSearchPath}",
-//            "--changeLogFile=${liquibaseChangeLogFile}",
-//            "--url=${liquibaseUrl}",
-//            "--username=${liquibaseUsername}",
-//            "--password=${liquibasePassword}",
-//            "--driver=${liquibaseDriver}",
-//            'diffChangeLog'
-//    )
-//}
-//
-//tasks.register('liquibaseUpdateSql', JavaExec) {
-//    group = 'liquibase'
-//    description = 'Prints the SQL Liquibase would run without applying it'
-//
-//    classpath = configurations.liquibaseRuntime
-//    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
-//
-//    args(
-//            "--search-path=${liquibaseSearchPath}",
-//            "--changeLogFile=${liquibaseChangeLogFile}",
-//            "--url=${liquibaseUrl}",
-//            "--username=${liquibaseUsername}",
-//            "--password=${liquibasePassword}",
-//            "--driver=${liquibaseDriver}",
-//            'updateSql'
-//    )
-//}
+// tasks.register('liquibaseUpdate', JavaExec) {
+//     group = 'liquibase'
+//     description = 'Runs Liquibase update to apply pending changesets'
+
+//     classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
+//     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+//     args(
+//             "--search-path=${liquibaseSearchPath}",
+//             "--changeLogFile=${liquibaseChangeLogFile}",
+//             "--url=${liquibaseUrl}",
+//             "--username=${liquibaseUsername}",
+//             "--password=${liquibasePassword}",
+//             "--driver=${liquibaseDriver}",
+//             'update'
+//     )
+// }
+
+// tasks.register('liquibaseStatus', JavaExec) {
+//     group = 'liquibase'
+//     description = 'Shows pending Liquibase changesets'
+
+//     classpath = configurations.liquibaseRuntime
+//     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+//     args(
+//             "--search-path=${liquibaseSearchPath}",
+//             "--changeLogFile=${liquibaseChangeLogFile}",
+//             "--url=${liquibaseUrl}",
+//             "--username=${liquibaseUsername}",
+//             "--password=${liquibasePassword}",
+//             "--driver=${liquibaseDriver}",
+//             'status'
+//     )
+// }
+
+// tasks.register('liquibaseDiffChangeLog', JavaExec) {
+//     group = 'liquibase'
+//     description = 'Shows pending Liquibase changesets'
+
+//     classpath = configurations.liquibaseRuntime
+//     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+//     args(
+//             "--search-path=${liquibaseSearchPath}",
+//             "--changeLogFile=${liquibaseChangeLogFile}",
+//             "--url=${liquibaseUrl}",
+//             "--username=${liquibaseUsername}",
+//             "--password=${liquibasePassword}",
+//             "--driver=${liquibaseDriver}",
+//             'diffChangeLog'
+//     )
+// }
+
+// tasks.register('liquibaseUpdateSql', JavaExec) {
+//     group = 'liquibase'
+//     description = 'Prints the SQL Liquibase would run without applying it'
+
+//     classpath = configurations.liquibaseRuntime
+//     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+//     args(
+//             "--search-path=${liquibaseSearchPath}",
+//             "--changeLogFile=${liquibaseChangeLogFile}",
+//             "--url=${liquibaseUrl}",
+//             "--username=${liquibaseUsername}",
+//             "--password=${liquibasePassword}",
+//             "--driver=${liquibaseDriver}",
+//             'updateSql'
+//     )
+// }
 
 tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
     group = 'liquibase'
