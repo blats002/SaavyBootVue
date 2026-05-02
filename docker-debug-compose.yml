@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: saavy_debug_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: saavy_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_debug_data:/var/lib/postgresql
+    networks:
+      - saavy_debug_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: gradle:jdk21
+    working_dir: /app
+    container_name: saavy_debug_app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/saavy_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - .:/app
+      - gradle_debug_cache:/root/.gradle
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - saavy_debug_network
+    command: gradle :server:bootRunDebug --no-daemon
+
+  client:
+    image: node:20
+    working_dir: /app
+    container_name: saavy_debug_client
+    ports:
+      - "5173:5173"
+      - "9229:9229"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    networks:
+      - saavy_debug_network
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - app
+
+volumes:
+  postgres_debug_data:
+  gradle_debug_cache:
+
+networks:
+  saavy_debug_network:
+    driver: bridge

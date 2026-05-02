@@ -27,6 +27,7 @@ services:
        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/saavy_db
        SPRING_DATASOURCE_USERNAME: postgres
        SPRING_DATASOURCE_PASSWORD: password
+       APP_CORS_ALLOWED_ORIGINS: http://localhost:8080
      ports:
        - "8080:8080"
      depends_on:

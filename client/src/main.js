@@ -101,6 +101,11 @@ import TriStateCheckbox from 'primevue/tristatecheckbox';
 import VirtualScroller from 'primevue/virtualscroller';
 
 import BlockViewer from '@/components/BlockViewer.vue';
+import GenericCrud from '@/components/GenericCrud.vue';
+import GenericDialog from '@/components/GenericDialog.vue';
+import GenericForm from '@/components/GenericForm.vue';
+import GenericPanel from '@/components/GenericPanel.vue';
+import GroupLayout from '@/components/GroupLayout.vue';
 
 import '@/assets/styles.scss';
 
@@ -118,6 +123,11 @@ app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 
 app.component('BlockViewer', BlockViewer);
+app.component('GenericCrud', GenericCrud);
+app.component('GenericDialog', GenericDialog);
+app.component('GenericForm', GenericForm);
+app.component('GenericPanel', GenericPanel);
+app.component('GroupLayout', GroupLayout);
 
 app.component('Accordion', Accordion);
 app.component('AccordionTab', AccordionTab);

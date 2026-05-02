@@ -14,6 +14,12 @@ java {
     }
 }
 
+dependencyManagement {
+    imports {
+//        mavenBom 'org.springframework:spring-framework-bom:6.2.15'
+//        mavenBom 'org.springframework:spring-webmvc-bom:7.0.7'
+    }
+}
 
 repositories {
     mavenCentral()
@@ -26,7 +32,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     developmentOnly 'org.springframework.boot:spring-boot-devtools:3.5.14'
 //    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     runtimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -38,7 +44,7 @@ dependencies {
     liquibaseRuntime 'org.liquibase.ext:liquibase-hibernate6:4.31.1'
     liquibaseRuntime 'org.springframework.boot:spring-boot-starter'
     liquibaseRuntime "org.springframework.boot:spring-boot-starter-data-jpa"
-    liquibaseRuntime 'org.postgresql:postgresql'
+    liquibaseRuntime 'org.postgresql:postgresql:42.7.11'
     liquibaseRuntime 'info.picocli:picocli:4.7.5'
 }
 
@@ -69,6 +75,19 @@ processResources{
 // Configure bootRun task to use development profile
 bootRun {
     args = ['--spring.profiles.active=development']
+}
+
+tasks.register('bootRunDebug', org.springframework.boot.gradle.tasks.run.BootRun) {
+    group = 'application'
+    description = 'Run the Spring Boot server with remote JVM debugging enabled'
+
+    mainClass = tasks.named('bootRun').get().mainClass
+    classpath = tasks.named('bootRun').get().classpath
+
+    args = ['--spring.profiles.active=development']
+    jvmArgs = [
+            '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+    ]
 }
 
 def liquibaseDiffChangeLogFile = 'src/main/resources/db/changelog/generated-jpa-diff-changelog.xml'
