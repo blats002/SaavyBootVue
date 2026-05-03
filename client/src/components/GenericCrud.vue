@@ -1,51 +1,66 @@
 <script setup>
 import { FilterMatchMode } from 'primevue/api';
-import { ref, onBeforeMount, onMounted } from 'vue';
+import { ref, onBeforeMount, onMounted, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 
 const props = defineProps({
-    title: {
-        type: String,
-        default: 'Manage Records'
-    },
-    dialogHeader: {
-        type: String,
-        default: 'Record Details'
-    },
-    dataKey: {
-        type: String,
-        default: 'id'
-    },
-    fields: {
-        type: Array,
-        required: true
-    },
-    service: {
-        type: Object,
-        required: true
-    },
-    createEmptyRecord: {
-        type: Function,
-        default: () => ({})
-    },
-    messages: {
-        type: Object,
-        default: () => ({
-            created: 'Record Created',
-            updated: 'Record Updated',
-            deleted: 'Record Deleted',
-            deletedMany: 'Records Deleted'
-        })
-    }
+  title: {
+    type: String,
+    default: 'Manage Records'
+  },
+  dialogHeader: {
+    type: String,
+    default: 'Record Details'
+  },
+  dataKey: {
+    type: String,
+    default: 'id'
+  },
+  selectionMode: {
+    type: String,
+    default: 'multiple'
+  },
+  refreshKey: {
+    type: [String, Number],
+    default: 0
+  },
+  fields: {
+    type: Array,
+    required: true
+  },
+  service: {
+    type: Object,
+    required: true
+  },
+  createEmptyRecord: {
+    type: Function,
+    default: () => ({})
+  },
+  messages: {
+    type: Object,
+    default: () => ({
+      created: 'Record Created',
+      updated: 'Record Updated',
+      deleted: 'Record Deleted',
+      deletedMany: 'Records Deleted'
+    })
+  }
 });
+
+const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted']);
 
 const toast = useToast();
 
 const records = ref([]);
 const record = ref({});
 const selectedRecords = ref(null);
+
+const getSelectionColumnMode = () => {
+    return props.selectionMode === 'single' ? 'single' : 'multiple';
+};
+
 const filters = ref({});
 const submitted = ref(false);
 
@@ -108,8 +123,24 @@ onMounted(() => {
     loadRecords();
 });
 
+watch(
+    () => props.refreshKey,
+    () => {
+        loadRecords();
+    }
+);
+
 const loadRecords = async () => {
     records.value = await props.service.findAll();
+    emit('records-loaded', records.value);
+};
+
+const handleRowClick = (event) => {
+    emit('record-selected', event.data);
+};
+
+const handleRowSelect = (event) => {
+  emit('record-selected', event.data);
 };
 
 const openNew = () => {
@@ -128,7 +159,7 @@ const getEditableFields = () => {
 };
 
 const getTableFields = () => {
-    return props.fields.filter((field) => !field.hidden);
+    return props.fields.filter((field) => !isFieldHidden(field));
 };
 
 const isEmptyValue = (value) => {
@@ -139,9 +170,20 @@ const isEmptyValue = (value) => {
     return value === null || value === undefined;
 };
 
-const hasFieldError = (fieldName) => {
-    const field = props.fields.find((item) => item.name === fieldName);
-    return submitted.value && field?.required && isEmptyValue(record.value[fieldName]);
+const hasFieldError = (field) => {
+  return props.submitted && field.required && isEmptyValue(props.modelValue[field.name]);
+};
+
+const isBlankValue = (value) => {
+  return value === null || value === undefined || value === '';
+};
+
+const isFieldHidden = (field) => {
+  if (!isBlankValue(field.hidden)) {
+    return field.hidden;
+  }
+
+  return field.editable === false;
 };
 
 const isValidRecord = () => {
@@ -176,6 +218,8 @@ const saveRecord = async () => {
             records.value[index] = updatedRecord || { ...updatedRecord };
         }
 
+        emit('record-saved', updatedRecord);
+
         toast.add({
             severity: 'success',
             summary: 'Successful',
@@ -186,6 +230,8 @@ const saveRecord = async () => {
         const createdRecord = await props.service.createOrUpdate(record.value)
 
         records.value.push(createdRecord);
+
+        emit('record-saved', createdRecord);
 
         toast.add({
             severity: 'success',
@@ -213,9 +259,13 @@ const confirmDeleteRecord = (selectedRecord) => {
 const deleteRecord = async () => {
     await props.service.delete(record.value[props.dataKey]);
 
+    const deletedRecord = record.value;
+
     records.value = records.value.filter((item) => item[props.dataKey] !== record.value[props.dataKey]);
     deleteRecordDialog.value = false;
     record.value = props.createEmptyRecord();
+
+    emit('record-deleted', deletedRecord);
 
     toast.add({
         severity: 'success',
@@ -232,9 +282,13 @@ const confirmDeleteSelected = () => {
 const getLeftToolBarButtons = () => {
     return leftToolBarButtons.map((button) => {
         if (button.key === 'delete-selected') {
+            const hasSelection = Array.isArray(selectedRecords.value)
+                ? selectedRecords.value.length > 0
+                : !!selectedRecords.value;
+
             return {
                 ...button,
-                disabled: !selectedRecords.value || !selectedRecords.value.length
+                disabled: !hasSelection
             };
         }
 
@@ -307,6 +361,31 @@ const initFilters = () => {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS }
     };
 };
+
+const getFieldDisplayValue = (rowData, field) => {
+  const value = rowData[field.name];
+
+  if (typeof field.displayTemplate === 'function') {
+    return field.displayTemplate(value, rowData, field);
+  }
+
+  if (field.type === 'manyToOne') {
+    if (!value) {
+      return '';
+    }
+
+    const optionLabel = field.optionLabel || 'name';
+
+    if (typeof value === 'object') {
+      return value[optionLabel] || value.id || '';
+    }
+
+    return value;
+  }
+
+  return value;
+};
+
 </script>
 
 <template>
@@ -331,6 +410,8 @@ const initFilters = () => {
                     :rowsPerPageOptions="[5, 10, 25]"
                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
                     responsiveLayout="scroll"
+                    @row-click="handleRowClick"
+                    @row-select="handleRowSelect"
                 >
                     <template #header>
                         <div class="flex flex-column md:flex-row md:justify-content-end md:align-items-center">
@@ -341,21 +422,21 @@ const initFilters = () => {
                         </div>
                     </template>
 
-                    <Column selectionMode="multiple" headerStyle="width: 3rem" />
+                    <Column :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
 
                     <Column
-                        v-for="field in getTableFields()"
-                        :key="field.name"
-                        :field="field.name"
-                        :header="field.label"
-                        :sortable="field.sortable"
-                        :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`"
-                    >
-                        <template #body="slotProps">
-                            <span class="p-column-title">{{ field.label }}</span>
-                            {{ slotProps.data[field.name] }}
-                        </template>
-                    </Column>
+                      v-for="field in getTableFields()"
+                      :key="field.name"
+                      :field="field.name"
+                      :header="field.label"
+                      :sortable="field.sortable"
+                      :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`"
+                  >
+                    <template #body="slotProps">
+                      <span class="p-column-title">{{ field.label }}</span>
+                      {{ getFieldDisplayValue(slotProps.data, field) }}
+                    </template>
+                  </Column>
 
                     <Column headerStyle="min-width:10rem;">
                         <template #body="slotProps">

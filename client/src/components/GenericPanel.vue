@@ -118,7 +118,7 @@ const handleButtonClick = (button, section) => {
           <Button
               v-for="button in leftToolBarButtons"
               :key="button.key"
-              :label="button.label"
+              v-tooltip.top="button.label"
               :icon="button.icon"
               :class="button.class"
               :severity="button.severity"
@@ -126,6 +126,7 @@ const handleButtonClick = (button, section) => {
               :outlined="button.outlined"
               :text="button.text"
               :rounded="button.rounded"
+              size="small"
               @click="handleButtonClick(button, 'left')"
           />
         </div>
@@ -136,7 +137,7 @@ const handleButtonClick = (button, section) => {
           <Button
               v-for="button in rightToolBarButtons"
               :key="button.key"
-              :label="button.label"
+              v-tooltip.top="button.label"
               :icon="button.icon"
               :class="button.class"
               :severity="button.severity"
@@ -144,6 +145,7 @@ const handleButtonClick = (button, section) => {
               :outlined="button.outlined"
               :text="button.text"
               :rounded="button.rounded"
+              size="small"
               @click="handleButtonClick(button, 'right')"
           />
         </div>
