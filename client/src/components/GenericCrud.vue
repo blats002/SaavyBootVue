@@ -34,6 +34,10 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  showToolbar: {
+    type: Boolean,
+    default: true
+  },
   createEmptyRecord: {
     type: Function,
     default: () => ({})
@@ -392,6 +396,7 @@ const getFieldDisplayValue = (rowData, field) => {
     <div class="grid">
         <div class="col-12">
             <GenericPanel
+                :showToolbar="showToolbar"
                 :bodyType="panel"
                 :title="title"
                 :leftToolBarButtons="getLeftToolBarButtons()"
@@ -422,7 +427,7 @@ const getFieldDisplayValue = (rowData, field) => {
                         </div>
                     </template>
 
-                    <Column :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
+                    <Column v-if="showToolbar" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
 
                     <Column
                       v-for="field in getTableFields()"
@@ -438,7 +443,7 @@ const getFieldDisplayValue = (rowData, field) => {
                     </template>
                   </Column>
 
-                    <Column headerStyle="min-width:10rem;">
+                    <Column v-if="showToolbar" headerStyle="min-width:10rem;">
                         <template #body="slotProps">
                             <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
                             <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2" @click="confirmDeleteRecord(slotProps.data)" />

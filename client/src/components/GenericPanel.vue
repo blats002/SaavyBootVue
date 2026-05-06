@@ -4,6 +4,8 @@ import Toolbar from 'primevue/toolbar';
 import Panel from 'primevue/panel';
 import Accordion from 'primevue/accordion';
 import TabView from 'primevue/tabview';
+import TabPanel from "primevue/tabpanel";
+import GenericCrud from "@/components/GenericCrud.vue";
 
 /*
      * GenericPanel bodyType usage:
@@ -87,6 +89,10 @@ const props = defineProps({
     type: String,
     default: 'div',
     validator: (value) => ['div', 'panel', 'accordion', 'tabview'].includes(value)
+  },
+  tabs: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -165,7 +171,17 @@ const handleButtonClick = (button, section) => {
     </Accordion>
 
     <TabView v-else-if="bodyType === 'tabview'" class="generic-panel-body">
-      <slot/>
+        <TabPanel
+            v-for="tab in tabs"
+            :key="tab.key"
+            :header="tab.header || tab.title || tab.name"
+        >
+          <slot :name="tab.key" :tab="tab.key">
+            <div class="p-3 text-color-secondary">
+              No content provided for {{ tab.header || tab.title || tab.name }}.
+            </div>
+          </slot>
+        </TabPanel>
     </TabView>
   </div>
 </template>

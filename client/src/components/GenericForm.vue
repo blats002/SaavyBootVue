@@ -9,6 +9,8 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import {FilterMatchMode} from "primevue/api";
+import GenericCrud from "@/components/GenericCrud.vue";
 
 const props = defineProps({
   fields: {
@@ -32,6 +34,12 @@ const relationshipDialogField = ref(null);
 const relationshipDialogOptions = ref([]);
 const relationshipDialogSelection = ref(null);
 const relationshipDialogLoading = ref(false);
+const relationshipDialogFilters = ref({
+  global: {
+    value: null,
+    matchMode: FilterMatchMode.CONTAINS
+  }
+});
 
 const updateField = (fieldName, value) => {
   emit('update:modelValue', {
@@ -127,6 +135,10 @@ const openRelationshipDialog = async (field) => {
   }
 };
 
+const rowSelectRelationshipRecord = (field) => {
+  relationshipDialogSelection.value = field;
+};
+
 const selectRelationshipRecord = () => {
   const field = relationshipDialogField.value;
 
@@ -162,6 +174,24 @@ const isEmptyValue = (value) => {
   }
 
   return value === null || value === undefined;
+};
+
+const getFieldValue = (field) => {
+  return props.modelValue[field.name];
+};
+
+const normalizeFieldValue = (field, value) => {
+  if (value === null || value === undefined || value === '') {
+    return value;
+  }
+
+  const optionValue = getOptionValue(field);
+
+  if (optionValue && typeof value === 'object') {
+    return value[optionValue];
+  }
+
+  return value;
 };
 
 const hasFieldError = (field) => {
@@ -216,7 +246,7 @@ const hasFieldError = (field) => {
       <label :for="field.name">{{ field.label }}</label>
       <Dropdown
           :id="field.name"
-          :modelValue="getFieldValue(field)"
+          :modelValue="modelValue[field.name]"
           :options="getFieldOptions(field)"
           :optionLabel="getOptionLabel(field)"
           :optionValue="getOptionValue(field)"
@@ -304,6 +334,21 @@ const hasFieldError = (field) => {
         {{ field.label }} is required.
       </small>
     </div>
+
+    <div v-else-if="field.type === 'datetime'" class="field">
+      <label :for="field.name">{{ field.label }}</label>
+      <Calendar
+          :id="field.name"
+          :modelValue="modelValue[field.name]"
+          :showTime="true"
+          :class="{ 'p-invalid': hasFieldError(field) }"
+          @update:modelValue="updateField(field.name, $event)"
+      />
+      <small v-if="hasFieldError(field)" class="p-invalid">
+        {{ field.label }} is required.
+      </small>
+    </div>
+
   </template>
   <Dialog
       v-model:visible="relationshipDialogVisible"
@@ -312,27 +357,50 @@ const hasFieldError = (field) => {
       class="p-fluid"
       :style="{ width: '700px' }"
   >
-    <DataTable
-        v-model:selection="relationshipDialogSelection"
-        :value="relationshipDialogOptions"
-        selectionMode="single"
-        dataKey="id"
-        :paginator="true"
-        :rows="10"
-        :loading="relationshipDialogLoading"
-        responsiveLayout="scroll"
-        @row-dblclick="selectRelationshipRecord"
-    >
-      <Column selectionMode="single" headerStyle="width: 3rem" />
+    <GenericCrud
+        :showToolbar="false"
+        title=""
+        dialogHeader=""
+        :fields="relationshipDialogField?.optionsFields"
+        :service="relationshipDialogField?.optionsService"
+        @record-selected="rowSelectRelationshipRecord"
+    />
+<!--    <DataTable-->
+<!--        v-model:selection="relationshipDialogSelection"-->
+<!--        v-model:filters="relationshipDialogFilters"-->
+<!--        :value="relationshipDialogOptions"-->
+<!--        selectionMode="single"-->
+<!--        dataKey="id"-->
+<!--        :paginator="true"-->
+<!--        :rows="10"-->
+<!--        :loading="relationshipDialogLoading"-->
+<!--        responsiveLayout="scroll"-->
+<!--        filterDisplay="row"-->
+<!--        :globalFilterFields="getRelationshipColumns(relationshipDialogField || {}).map(col => col.field)"-->
+<!--        @row-dblclick="selectRelationshipRecord"-->
+<!--    >-->
+<!--      <template #header>-->
+<!--        <div class="flex justify-content-end">-->
+<!--          <span class="p-input-icon-left">-->
+<!--            <i class="pi pi-search"/>-->
+<!--            <InputText-->
+<!--                v-model="relationshipDialogFilters['global'].value"-->
+<!--                placeholder="Search..."-->
+<!--            />-->
+<!--          </span>-->
+<!--        </div>-->
+<!--      </template>-->
 
-      <Column
-          v-for="column in getRelationshipColumns(relationshipDialogField || {})"
-          :key="column.field"
-          :field="column.field"
-          :header="column.header"
-          :sortable="column.sortable !== false"
-      />
-    </DataTable>
+<!--      <Column selectionMode="single" headerStyle="width: 3rem"/>-->
+
+<!--      <Column-->
+<!--          v-for="column in getRelationshipColumns(relationshipDialogField || {})"-->
+<!--          :key="column.field"-->
+<!--          :field="column.field"-->
+<!--          :header="column.header"-->
+<!--          :sortable="column.sortable !== false"-->
+<!--      />-->
+<!--    </DataTable>-->
 
     <template #footer>
       <Button

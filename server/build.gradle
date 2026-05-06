@@ -47,6 +47,7 @@ tasks.named('test') {
 
 tasks.register('cleanFrontEnd', Delete) {
     delete fileTree(dir: 'src/main/resources/static', include: '**/*')
+    delete fileTree(dir: 'build/resources/static', include: '**/*')
 }
 
 tasks.register('copyFrontend', Copy) {
@@ -56,7 +57,7 @@ tasks.register('copyFrontend', Copy) {
 }
 
 tasks.register('frontendHotDeploy', Copy) {
-    dependsOn ':client:audit', ':client:build', cleanFrontEnd
+    dependsOn ':client:copyFrontend'
     from('../client/dist')
     into('build/resources/main/static')
 }

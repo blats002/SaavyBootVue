@@ -264,30 +264,50 @@ const getSelectedMasterLabel = () => {
         :subtitle="subtitle || getSelectedMasterLabel()"
         :showToolbar="false"
     >
-      <TabView class="generic-panel-body">
-        <TabPanel
-            v-for="detail in details"
-            :key="getDetailKey(detail)"
-            :header="getDetailTitle(detail)"
-        >
 
-          <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">
-            Select a parent record before managing {{ detail.title }}.
-          </div>
-          <GenericCrud
-              v-else
-              :key="getDetailKey(detail)"
-              :refreshKey="detailRefreshKey"
-              :title="detail.title"
-              :dialogHeader="detail.dialogHeader"
-              :dataKey="detail.dataKey || dataKey"
-              :fields="getDetailFields(detail)"
-              :service="getDetailService(detail)"
-              :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
-              :messages="detail.messages"
-          />
-        </TabPanel>
-      </TabView>
+            <TabView class="generic-panel-body">
+              <TabPanel
+                  v-for="detail in details"
+                  :key="getDetailKey(detail)"
+                  :header="getDetailTitle(detail)"
+              >
+
+                <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">
+                  Select a parent record before managing {{ detail.title }}.
+                </div>
+                <GenericCrud
+                    v-else
+                    :key="getDetailKey(detail)"
+                    :refreshKey="detailRefreshKey"
+                    :title="detail.title"
+                    :dialogHeader="detail.dialogHeader"
+                    :dataKey="detail.dataKey || dataKey"
+                    :fields="getDetailFields(detail)"
+                    :service="getDetailService(detail)"
+                    :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
+                    :messages="detail.messages"
+                />
+              </TabPanel>
+            </TabView>
+
+<!--      <template v-for="detail in details" :key="getDetailKey(detail)" :name="detail.key" v-slot:{{detail.key}}>-->
+
+<!--        <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">-->
+<!--          Select a parent record before managing {{ detail.title }}.-->
+<!--        </div>-->
+<!--        <GenericCrud-->
+<!--            v-else-->
+<!--            :key="getDetailKey(detail)"-->
+<!--            :refreshKey="detailRefreshKey"-->
+<!--            :title="detail.title"-->
+<!--            :dialogHeader="detail.dialogHeader"-->
+<!--            :dataKey="detail.dataKey || dataKey"-->
+<!--            :fields="getDetailFields(detail)"-->
+<!--            :service="getDetailService(detail)"-->
+<!--            :createEmptyRecord="getDetailCreateEmptyRecord(detail)"-->
+<!--            :messages="detail.messages"-->
+<!--        />-->
+<!--      </template>-->
     </GenericPanel>
   </GroupLayout>
 </template>
