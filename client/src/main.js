@@ -104,8 +104,10 @@ import BlockViewer from '@/components/BlockViewer.vue';
 import GenericCrud from '@/components/GenericCrud.vue';
 import GenericDialog from '@/components/GenericDialog.vue';
 import GenericForm from '@/components/GenericForm.vue';
+import GenericMasterDetail from '@/components/GenericMasterDetail.vue';
 import GenericPanel from '@/components/GenericPanel.vue';
 import GroupLayout from '@/components/GroupLayout.vue';
+import GenericQRReader from '@/components/GenericQRReader.vue';
 
 import '@/assets/styles.scss';
 
@@ -126,8 +128,10 @@ app.component('BlockViewer', BlockViewer);
 app.component('GenericCrud', GenericCrud);
 app.component('GenericDialog', GenericDialog);
 app.component('GenericForm', GenericForm);
+app.component('GenericMasterDetail', GenericMasterDetail);
 app.component('GenericPanel', GenericPanel);
 app.component('GroupLayout', GroupLayout);
+app.component('GenericQRReader', GenericQRReader);
 
 app.component('Accordion', Accordion);
 app.component('AccordionTab', AccordionTab);
