@@ -4,7 +4,13 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
-
-    <include file="/db/changelog/2026-04-29-01-changelog.xml"/>
-    <include file="/db/changelog/2026-04-30-01-changelog.xml"/>
+    <changeSet author="ramil.saavedra (generated)" id="1778236195196-1">
+        <createTable tableName="test">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="testPK"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="size" type="INT"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

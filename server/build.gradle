@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.14'
+    id 'org.springframework.boot' version '3.5.7'
     id 'io.spring.dependency-management' version '1.1.6'
     id 'org.liquibase.gradle' version '2.2.2'
 }
@@ -25,9 +25,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     developmentOnly 'org.springframework.boot:spring-boot-devtools:3.5.14'
 //    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
-    runtimeOnly 'org.postgresql:postgresql:42.7.11'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
     runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
+    runtimeOnly "mysql:mysql-connector-java:8.0.32"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     compileOnly 'org.projectlombok:lombok'
@@ -37,7 +38,10 @@ dependencies {
     liquibaseRuntime 'org.liquibase.ext:liquibase-hibernate6:4.31.1'
     liquibaseRuntime 'org.springframework.boot:spring-boot-starter'
     liquibaseRuntime "org.springframework.boot:spring-boot-starter-data-jpa"
+    liquibaseRuntime 'org.hibernate.orm:hibernate-core:6.5.0.Final'
     liquibaseRuntime 'org.postgresql:postgresql:42.7.11'
+    liquibaseRuntime "mysql:mysql-connector-java:8.0.32"
+    liquibaseRuntime 'com.h2database:h2'
     liquibaseRuntime 'info.picocli:picocli:4.7.5'
 }
 
@@ -63,7 +67,12 @@ tasks.register('frontendHotDeploy', Copy) {
 }
 
 processResources{
-    dependsOn copyFrontend
+    if(!gradle.startParameter.taskNames.contains("bootRunDebug")
+            && !gradle.startParameter.taskNames.contains(":server:bootRunDebug")
+            && !gradle.startParameter.taskNames.contains("liquibaseJpaDiffChangeLog")
+            && !gradle.startParameter.taskNames.contains(":server:liquibaseJpaDiffChangeLog")) {
+        dependsOn copyFrontend
+    }
 }
 
 // Configure bootRun task to use development profile
@@ -87,16 +96,16 @@ tasks.register('bootRunDebug', org.springframework.boot.gradle.tasks.run.BootRun
 def liquibaseDiffChangeLogFile = 'src/main/resources/db/changelog/generated-jpa-diff-changelog.xml'
 //def liquibaseChangeLogFile = 'src/main/resources/db/changelog/db.changelog-master.xml'
 def liquibaseSearchPath = "${projectDir},${projectDir}/src/main/resources"
-def liquibaseUrl = "jdbc:postgresql://localhost:5432/saavy_db"
-def liquibaseUsername = 'postgres'
-def liquibasePassword = 'password'
-def liquibaseDriver = 'org.postgresql.Driver'
-
-def liquibaseReferenceUrl = 'hibernate:spring:org.saavy?dialect=org.hibernate.dialect.PostgreSQLDialect'
+def liquibaseUrl = databaseUrl
+def liquibaseUsername = databaseUserName
+def liquibasePassword = databasePassword
+def liquibaseDriver = databaseDriver
+def liquibaseReferenceUrl = "hibernate:spring:org.saavy?dialect=${databaseDialect}"
 
 tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
     group = 'liquibase'
     description = 'Generates a Liquibase changelog from the current database'
+
     dependsOn classes
 
     classpath = configurations.liquibaseRuntime + sourceSets.main.runtimeClasspath
