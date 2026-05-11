@@ -1,16 +1,22 @@
 <script setup>
 import GenericCrud from '@/components/GenericCrud.vue';
-import testService from '@/service/TestService';
-import { testFields, createEmptyTest } from '@/service/TestService';
+import supplierService, { createEmptySupplier } from '@/service/JPASupplierService';
+import { onMounted, ref } from 'vue';
+
+const fields = ref([]);
+
+onMounted(async () => {
+    fields.value = await supplierService.getFields();
+});
 </script>
 
 <template>
     <GenericCrud
         dialogHeader="Test Details"
         dataKey="id"
-        :fields="testFields"
-        :service="testService"
-        :createEmptyRecord="createEmptyTest"
+        :fields="fields"
+        :service="supplierService"
+        :createEmptyRecord="createEmptySupplier"
         :messages="{
             created: 'Test Created',
             updated: 'Test Updated',

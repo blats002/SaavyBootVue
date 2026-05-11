@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:latest
-    container_name: saavy_postgres
+    container_name: saavy_boot_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: server/DockerFile
-    container_name: saavy_app
+    container_name: saavy_boot_app
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/saavy_db
       SPRING_DATASOURCE_USERNAME: postgres

@@ -6,51 +6,51 @@ import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 
 const props = defineProps({
-  title: {
-    type: String,
-    default: 'Manage Records'
-  },
-  dialogHeader: {
-    type: String,
-    default: 'Record Details'
-  },
-  dataKey: {
-    type: String,
-    default: 'id'
-  },
-  selectionMode: {
-    type: String,
-    default: 'multiple'
-  },
-  refreshKey: {
-    type: [String, Number],
-    default: 0
-  },
-  fields: {
-    type: Array,
-    required: true
-  },
-  service: {
-    type: Object,
-    required: true
-  },
-  showToolbar: {
-    type: Boolean,
-    default: true
-  },
-  createEmptyRecord: {
-    type: Function,
-    default: () => ({})
-  },
-  messages: {
-    type: Object,
-    default: () => ({
-      created: 'Record Created',
-      updated: 'Record Updated',
-      deleted: 'Record Deleted',
-      deletedMany: 'Records Deleted'
-    })
-  }
+    title: {
+        type: String,
+        default: 'Manage Records'
+    },
+    dialogHeader: {
+        type: String,
+        default: 'Record Details'
+    },
+    dataKey: {
+        type: String,
+        default: 'id'
+    },
+    selectionMode: {
+        type: String,
+        default: 'multiple'
+    },
+    refreshKey: {
+        type: [String, Number],
+        default: 0
+    },
+    fields: {
+        type: Array,
+        required: true
+    },
+    service: {
+        type: Object,
+        required: true
+    },
+    showToolbar: {
+        type: Boolean,
+        default: true
+    },
+    createEmptyRecord: {
+        type: Function,
+        default: () => ({})
+    },
+    messages: {
+        type: Object,
+        default: () => ({
+            created: 'Record Created',
+            updated: 'Record Updated',
+            deleted: 'Record Deleted',
+            deletedMany: 'Records Deleted'
+        })
+    }
 });
 
 const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted']);
@@ -135,8 +135,10 @@ watch(
 );
 
 const loadRecords = async () => {
-    records.value = await props.service.findAll();
-    emit('records-loaded', records.value);
+    if (props.service !== undefined) {
+        records.value = await props.service.findAll();
+        emit('records-loaded', records.value);
+    }
 };
 
 const handleRowClick = (event) => {
@@ -144,7 +146,7 @@ const handleRowClick = (event) => {
 };
 
 const handleRowSelect = (event) => {
-  emit('record-selected', event.data);
+    emit('record-selected', event.data);
 };
 
 const openNew = () => {
@@ -159,11 +161,19 @@ const hideDialog = () => {
 };
 
 const getEditableFields = () => {
-  return props.fields
+    return props.fields;
 };
 
 const getTableFields = () => {
-    return props.fields.filter((field) => !isFieldHidden(field));
+    if (props.fields) {
+        return props.fields.filter((field) => !isFieldHidden(field) && !isOneToManyRelationship(field));
+    } else {
+        return [];
+    }
+};
+
+const isOneToManyRelationship = (field) => {
+    return field.type === 'oneToMany';
 };
 
 const isEmptyValue = (value) => {
@@ -175,19 +185,19 @@ const isEmptyValue = (value) => {
 };
 
 const hasFieldError = (field) => {
-  return props.submitted && field.required && isEmptyValue(props.modelValue[field.name]);
+    return props.submitted && field.required && isEmptyValue(props.modelValue[field.name]);
 };
 
 const isBlankValue = (value) => {
-  return value === null || value === undefined || value === '';
+    return value === null || value === undefined || value === '';
 };
 
 const isFieldHidden = (field) => {
-  if (!isBlankValue(field.hidden)) {
-    return field.hidden;
-  }
+    if (!isBlankValue(field.hidden)) {
+        return field.hidden;
+    }
 
-  return field.editable === false;
+    return field.editable === false;
 };
 
 const isValidRecord = () => {
@@ -231,7 +241,7 @@ const saveRecord = async () => {
             life: 3000
         });
     } else {
-        const createdRecord = await props.service.createOrUpdate(record.value)
+        const createdRecord = await props.service.createOrUpdate(record.value);
 
         records.value.push(createdRecord);
 
@@ -286,9 +296,7 @@ const confirmDeleteSelected = () => {
 const getLeftToolBarButtons = () => {
     return leftToolBarButtons.map((button) => {
         if (button.key === 'delete-selected') {
-            const hasSelection = Array.isArray(selectedRecords.value)
-                ? selectedRecords.value.length > 0
-                : !!selectedRecords.value;
+            const hasSelection = Array.isArray(selectedRecords.value) ? selectedRecords.value.length > 0 : !!selectedRecords.value;
 
             return {
                 ...button,
@@ -367,41 +375,46 @@ const initFilters = () => {
 };
 
 const getFieldDisplayValue = (rowData, field) => {
-  const value = rowData[field.name];
+    const value = rowData[field.name];
 
-  if (typeof field.displayTemplate === 'function') {
-    return field.displayTemplate(value, rowData, field);
-  }
-
-  if (field.type === 'manyToOne') {
-    if (!value) {
-      return '';
+    if (value === undefined || value === null) {
+        return '';
     }
 
-    const optionLabel = field.optionLabel || 'name';
+    if (typeof field.displayTemplate === 'function') {
+        return field.displayTemplate(value, rowData, field);
+    }
 
-    if (typeof value === 'object') {
-      return value[optionLabel] || value.id || '';
+    if (value.displayValue !== null && value.displayValue !== undefined && value.displayValue !== '') {
+        return value.displayValue;
+    }
+
+    if (field.type === 'enum') {
+        return field.options.find((option) => option.value === value).label;
+    }
+
+    if (field.type === 'manyToOne') {
+        if (!value) {
+            return '';
+        }
+
+        const optionLabel = field.optionLabel || 'name';
+
+        if (typeof value === 'object') {
+            return value[optionLabel] || value.id || '';
+        }
+
+        return value;
     }
 
     return value;
-  }
-
-  return value;
 };
-
 </script>
 
 <template>
     <div class="grid">
         <div class="col-12">
-            <GenericPanel
-                :showToolbar="showToolbar"
-                :bodyType="panel"
-                :title="title"
-                :leftToolBarButtons="getLeftToolBarButtons()"
-                @button-click="handlePanelButtonClick"
-            >
+            <GenericPanel :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getLeftToolBarButtons()" @button-click="handlePanelButtonClick">
                 <Toast />
 
                 <DataTable
@@ -429,19 +442,12 @@ const getFieldDisplayValue = (rowData, field) => {
 
                     <Column v-if="showToolbar" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
 
-                    <Column
-                      v-for="field in getTableFields()"
-                      :key="field.name"
-                      :field="field.name"
-                      :header="field.label"
-                      :sortable="field.sortable"
-                      :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`"
-                  >
-                    <template #body="slotProps">
-                      <span class="p-column-title">{{ field.label }}</span>
-                      {{ getFieldDisplayValue(slotProps.data, field) }}
-                    </template>
-                  </Column>
+                    <Column v-for="field in getTableFields()" :key="field.name" :field="field.name" :header="field.label" :sortable="field.sortable" :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`">
+                        <template #body="slotProps">
+                            <span class="p-column-title">{{ field.label }}</span>
+                            {{ getFieldDisplayValue(slotProps.data, field) }}
+                        </template>
+                    </Column>
 
                     <Column v-if="showToolbar" headerStyle="min-width:10rem;">
                         <template #body="slotProps">

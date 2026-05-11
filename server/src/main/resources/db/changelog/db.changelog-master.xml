@@ -4,13 +4,56 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
-    <changeSet author="ramil.saavedra (generated)" id="1778236195196-1">
-        <createTable tableName="test">
+<!--    Inventory Modules-->
+    <changeSet author="Ramil (generated)" id="1778512693231-1">
+        <createTable tableName="product">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="testPK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="productPK"/>
             </column>
-            <column name="description" type="VARCHAR(255)"/>
-            <column name="size" type="INT"/>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="FLOAT(53)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
+    </changeSet>
+    <changeSet author="Ramil (generated)" id="1778512693231-2">
+        <createTable tableName="stock">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="stockPK"/>
+            </column>
+            <column name="quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supplier_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Ramil (generated)" id="1778512693231-3">
+        <createTable tableName="supplier">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="supplierPK"/>
+            </column>
+            <column name="contact_email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Ramil (generated)" id="1778512693231-4">
+        <addUniqueConstraint columnNames="contact_email" constraintName="UC_SUPPLIERCONTACT_EMAIL_COL" tableName="supplier"/>
+    </changeSet>
+    <changeSet author="Ramil (generated)" id="1778512693231-5">
+        <addForeignKeyConstraint baseColumnNames="product_id" baseTableName="stock" constraintName="FKjghkvw2snnsr5gpct0of7xfcf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="product" validate="true"/>
+    </changeSet>
+    <changeSet author="Ramil (generated)" id="1778512693231-6">
+        <addForeignKeyConstraint baseColumnNames="supplier_id" baseTableName="stock" constraintName="FKl2fbubw80ojtirp051oms6piu" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="supplier" validate="true"/>
     </changeSet>
 </databaseChangeLog>

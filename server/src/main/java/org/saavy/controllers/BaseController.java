@@ -1,6 +1,7 @@
 
 package org.saavy.controllers;
 
+import org.hibernate.Hibernate;
 import org.saavy.component.ParentFieldRegistry;
 import org.saavy.services.JPAService;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -138,9 +138,14 @@ const router = createRouter({
                     component: () => import('@/views/pages/Crud.vue')
                 },
                 {
-                    path: '/pages/crudtest',
-                    name: 'crudtest',
-                    component: () => import('@/views/pages/CrudTest.vue')
+                    path: '/pages/suppliers',
+                    name: 'supplier',
+                    component: () => import('@/views/pages/SupplierManagement.vue')
+                },
+                {
+                    path: '/pages/products',
+                    name: 'product',
+                    component: () => import('@/views/pages/ProductManagement.vue')
                 },
                 {
                     path: '/documentation',

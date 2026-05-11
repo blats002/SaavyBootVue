@@ -8,9 +8,14 @@ const model = ref([
         label: 'Home',
         items: [
             {
-                label: 'Crud Test',
-                icon: 'pi pi-fw pi-pencil',
-                to: '/pages/crudtest'
+                label: 'Suppliers',
+                icon: 'pi pi-fw pi-building',
+                to: '/pages/suppliers'
+            },
+            {
+                label: 'Products',
+                icon: 'pi pi-fw pi-building',
+                to: '/pages/products'
             }
         ]
     },
@@ -186,11 +191,11 @@ const model = ref([
             <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
             <li v-if="item.separator" class="menu-separator"></li>
         </template>
-<!--        <li>-->
-<!--            <a href="https://www.primefaces.org/primeblocks-vue/#/" target="_blank">-->
-<!--                <img src="/layout/images/banner-primeblocks.png" alt="Prime Blocks" class="w-full mt-3" />-->
-<!--            </a>-->
-<!--        </li>-->
+        <!--        <li>-->
+        <!--            <a href="https://www.primefaces.org/primeblocks-vue/#/" target="_blank">-->
+        <!--                <img src="/layout/images/banner-primeblocks.png" alt="Prime Blocks" class="w-full mt-3" />-->
+        <!--            </a>-->
+        <!--        </li>-->
     </ul>
 </template>
 
