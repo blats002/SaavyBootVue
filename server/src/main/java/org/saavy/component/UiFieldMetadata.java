@@ -12,6 +12,8 @@ public record UiFieldMetadata(
         String optionLabel,
         String optionValue,
         String optionsEndpoint,
-        String enumOptionsJSON
+        String enumOptionsJSON,
+        String fileNameField,
+        String contentTypeField
 ) {
 }

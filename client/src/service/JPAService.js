@@ -26,6 +26,9 @@ const createJpaService = (apiEndpointName) => ({
             meta.service = jpaService;
             meta.fields = await jpaService.getFieldsMeta();
             meta.messages = JSON.parse(meta.messagesJSON);
+
+            // meta.createEmptyRecord  = () => (createEmptyRecord(meta.fields));
+
             console.log(meta);
             return meta;
         });
@@ -80,5 +83,32 @@ const createJpaService = (apiEndpointName) => ({
         });
     }
 });
+
+
+function createEmptyRecord(fields) {
+    const record = {};
+
+    fields.forEach(field => {
+        switch (field.type) {
+            case "text":
+                record[field.name] = "";
+                break;
+            case "number":
+                record[field.name] = null; // or 0
+                break;
+            case "image":
+                record[field.name] = null;
+                break;
+            case "manyToOne":
+                record[field.name] = null;
+                break;
+            default:
+                record[field.name] = null;
+        }
+    });
+
+    return record;
+}
+
 
 export default createJpaService;

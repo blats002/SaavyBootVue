@@ -7,6 +7,10 @@ import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+
+import FileUpload from 'primevue/fileupload';
+import Image from 'primevue/image';
+
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { FilterMatchMode } from 'primevue/api';
@@ -205,10 +209,42 @@ const normalizeFieldValue = (field, value) => {
 const hasFieldError = (field) => {
     return props.submitted && field.required && isEmptyValue(props.modelValue[field.name]);
 };
+
+
+const onImageUpload = (event, fieldName) => {
+  const file = event.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    updateField(fieldName, reader.result);
+  };
+  reader.readAsDataURL(file);
+};
+
+const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
+  // Access the newly added file
+  const file = event.files[0];
+  console.log("Selected file name:", file.name);
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    emit('update:modelValue', {
+      ...props.modelValue,
+      [fieldName]: reader.result,
+      [fileNameField]: file.name,
+      [contentTypeField]: file.type
+    });
+  };
+
+  reader.readAsDataURL(file);
+};
+
 </script>
 
 <template>
-    <template v-for="field in fields" :key="field.name">
+    <template v-for="field in fields" :key="field.name" >
         <input v-if="isFieldHidden(field)" :id="field.name" :value="modelValue[field.name]" type="hidden" @input="updateField(field.name, $event.target.value)" />
 
         <div v-else-if="!field.editable" class="field">
@@ -295,6 +331,25 @@ const hasFieldError = (field) => {
             <Calendar :id="field.name" :modelValue="modelValue[field.name]" :showTime="true" :class="{ 'p-invalid': hasFieldError(field) }" @update:modelValue="updateField(field.name, $event)" />
             <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
         </div>
+
+      <div v-else-if="field.type === 'image' || field.type === 'file'" class="field">
+        <label :for="field.name">{{ field.label }}</label>
+
+        <!-- Image preview -->
+        <FileUpload
+            :src="modelValue[field.name]"
+            :multiple="false"
+            :fileLimit="1"
+            preview
+            customUpload
+            chooseLabel="Upload File"
+            @select="(e) => onFileSelect(e, field.name, field.fileNameField, field.contentTypeField)"
+        />
+
+        <small v-if="hasFieldError(field)" class="p-invalid">
+          {{ field.label }} is required.
+        </small>
+      </div>
     </template>
     <Dialog v-model:visible="relationshipDialogVisible" :header="relationshipDialogField ? `Select ${relationshipDialogField.label}` : 'Select Record'" :modal="true" class="p-fluid" :style="{ width: '700px' }">
         <GenericCrud :showToolbar="false" title="" dialogHeader="" :fields="relationshipDialogField?.optionsFields" :service="relationshipDialogField?.optionsService" @record-selected="rowSelectRelationshipRecord" />
@@ -341,3 +396,12 @@ const hasFieldError = (field) => {
         </template>
     </Dialog>
 </template>
+
+<style>
+
+.uploaded-image {
+  max-width: 200px;
+  border-radius: 6px;
+}
+
+</style>

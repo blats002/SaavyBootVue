@@ -4,6 +4,7 @@ import { ref, onBeforeMount, onMounted, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
+import Image from 'primevue/image';
 
 const props = defineProps({
     title: {
@@ -149,8 +150,19 @@ const handleRowSelect = (event) => {
     emit('record-selected', event.data);
 };
 
+
+const createEmptyFromFields = () => {
+  return Object.fromEntries(
+      props.fields.map(field => [
+        field.name,
+        field.type === 'text' ? '' : null
+      ])
+  );
+};
+
+
 const openNew = () => {
-    record.value = props.createEmptyRecord();
+    record.value = createEmptyFromFields();
     submitted.value = false;
     recordDialog.value = true;
 };
@@ -409,6 +421,52 @@ const getFieldDisplayValue = (rowData, field) => {
 
     return value;
 };
+
+// const downloadFile = (fileData, fileName = 'file') => {
+//   const link = document.createElement('a');
+//   link.href = fileData;
+//   link.download = fileName;
+//   link.click();
+// };
+
+const downloadFile = (base64Data, fileName = 'file', mimeType = 'application/octet-stream') => {
+  // 1. Remove the Data URL prefix if it exists (e.g., "data:image/png;base64,")
+  const base64Clean = base64Data.split(',')[1] || base64Data;
+
+  // 2. Decode base64 to a raw binary string
+  const binaryString = window.atob(base64Clean);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+
+  // 3. Convert binary string to a typed numeric array
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  // 4. Create a Blob from the binary array
+  const blob = new Blob([bytes], { type: mimeType });
+
+  // 5. Create a temporary URL for the Blob and download it
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link); // Required for Firefox compatibility
+  link.click();
+
+  // 6. Clean up memory
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+
+const getFileHref = (value) => {
+  if (!value) return null;
+  return value.content || value;
+};
+
+
 </script>
 
 <template>
@@ -445,7 +503,44 @@ const getFieldDisplayValue = (rowData, field) => {
                     <Column v-for="field in getTableFields()" :key="field.name" :field="field.name" :header="field.label" :sortable="field.sortable" :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`">
                         <template #body="slotProps">
                             <span class="p-column-title">{{ field.label }}</span>
-                            {{ getFieldDisplayValue(slotProps.data, field) }}
+
+                              <Image
+                              v-if="field.type === 'image' && slotProps.data[field.name]"
+                              :src="slotProps.data[field.name]"
+                              preview
+                              imageClass="table-image"
+                              width="50"
+                              />
+
+                              <Button
+                                  v-if="(field.type === 'file' || field.type === 'image') && slotProps.data[field.name]"
+                                  icon="pi pi-download"
+                                  :label="field.type === 'file'?'Download':''"
+                                  link
+                                  @click="downloadFile(
+                                      slotProps.data.content,
+                                      slotProps.data[field.fileNameField],
+                                      slotProps.data[field.contentTypeField]
+                                  )"
+                              />
+
+
+<!--                          <Image-->
+<!--                              v-else-if="field.type === 'file'"-->
+<!--                              :src="slotProps.data && slotProps.data[field.name]"-->
+<!--                              icon="pi pi-download"-->
+<!--                              class="p-button-text p-button-sm"-->
+<!--                              label="Download"-->
+<!--                              @click="downloadFile(-->
+<!--                                  slotProps.data[field.name].content || slotProps.data[field.name],-->
+<!--                                  slotProps.data[field.name].fileName || field.label-->
+<!--                              )"-->
+<!--                              width="50"-->
+<!--                          />-->
+
+                          <div v-else>
+                                {{ getFieldDisplayValue(slotProps.data, field) }}
+                              </div>
                         </template>
                     </Column>
 

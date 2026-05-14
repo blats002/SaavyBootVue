@@ -117,7 +117,9 @@ public class UiFieldMetadataService {
                 uiField.optionLabel(),
                 uiField.optionValue(),
                 uiField.optionsEndpoint(),
-                uiField.enumOptions()
+                uiField.enumOptions(),
+                uiField.fileNameField(),
+                uiField.contentTypeField()
         );
     }
 

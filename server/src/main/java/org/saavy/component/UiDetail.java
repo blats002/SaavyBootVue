@@ -12,7 +12,7 @@ public @interface UiDetail {
     String title() default "";
     String dialogHeader() default "";
     String parentField() default "";
-    String parentValue() default "";
+    String parentValue() default "{\"id\":\"id\", \"name\":\"name\"}";
     String messages()  default "";
     String detailEndpoint()  default "";
 }

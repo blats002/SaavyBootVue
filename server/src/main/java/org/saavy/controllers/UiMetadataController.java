@@ -6,13 +6,15 @@ import org.saavy.component.UiMasterMetadata;
 import org.saavy.services.UiFieldMetadataService;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/metadata")
 public class UiMetadataController {
 
-    private final org.saavy.services.UiFieldMetadataService uiFieldMetadataService;
+    private final UiFieldMetadataService uiFieldMetadataService;
 
 
 

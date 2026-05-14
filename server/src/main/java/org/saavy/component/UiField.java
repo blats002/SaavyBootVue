@@ -18,4 +18,6 @@ public @interface UiField {
     String optionValue() default "value";
     String optionsEndpoint() default "";
     String enumOptions() default "";
+    String fileNameField() default "";;
+    String contentTypeField() default "";
 }

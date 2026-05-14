@@ -59,9 +59,4 @@ public class Product {
     )
     @JsonManagedReference
     private List<Stock> stocks = new ArrayList<>();
-
-
-
-
-    // ... existing code ...
 }
