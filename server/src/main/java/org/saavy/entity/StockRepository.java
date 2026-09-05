@@ -1,11 +1,6 @@
 package org.saavy.entity;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.saavy.reference.BaseJpaRepository;
 
-import java.util.List;
-import java.util.Optional;
-
-public interface StockRepository extends JpaRepository<Stock, Long> {
-
-    List<Stock> findAllByProduct(Optional<Product> byId);
+public interface StockRepository extends BaseJpaRepository<Stock, Long> {
 }

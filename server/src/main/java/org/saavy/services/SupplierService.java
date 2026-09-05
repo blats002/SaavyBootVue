@@ -1,42 +1,38 @@
 package org.saavy.services;
 
 import org.saavy.entity.Supplier;
+import org.saavy.entity.SupplierDTO;
 import org.saavy.entity.SupplierRepository;
+import org.saavy.reference.BaseJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-
 @Service
-public class SupplierService implements JPAService<Supplier, Long> {
+public class SupplierService extends JPAService<Supplier, SupplierDTO, Long> {
 
     @Autowired
     private SupplierRepository supplierRepository;
 
     @Override
-    public List<Supplier> findAll() {
-        return supplierRepository.findAll();
+    protected BaseJpaRepository<Supplier, Long> getJpaRepository() {
+        return supplierRepository;
     }
 
     @Override
-    public Optional<Supplier> findById(Long aLong) {
-        return supplierRepository.findById(aLong);
+    public SupplierDTO toDTO(Supplier entity) {
+        return new SupplierDTO(
+                entity.getId(),
+                entity.getName(),
+                entity.getContactEmail()
+        );
     }
 
     @Override
-    public Supplier save(Supplier entity) {
-        return supplierRepository.save(entity);
-    }
-
-    @Override
-    public Supplier update(Long aLong, Supplier entity) {
-        entity.setId(aLong);
-        return supplierRepository.save(entity);
-    }
-
-    @Override
-    public void deleteById(Long aLong) {
-        supplierRepository.deleteById(aLong);
+    public Supplier toEntity(SupplierDTO dto, Long id) {
+        return new Supplier(
+                id != null ? id : dto.getId(),
+                dto.getName(),
+                dto.getContactEmail()
+        );
     }
 }

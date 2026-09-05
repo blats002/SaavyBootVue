@@ -1,10 +1,38 @@
 import axios from 'axios';
+import AuthService from '@/service/AuthService';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
 
+// Attach JWT token to all requests
+axios.interceptors.request.use(
+    (config) => {
+        const token = AuthService.getToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Redirect to login on 401 Unauthorized
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            AuthService.logout();
+            if (window.location.pathname !== '/auth/login') {
+                window.location.href = '/auth/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 const createJpaService = (apiEndpointName) => ({
     findAll: () => axios.get(`${SERVER_URL}/api/${apiEndpointName}`).then((res) => res.data || []),
-    findByParent: (apiParentName, jpaEntity) => axios.get(`${SERVER_URL}/api/${apiEndpointName}/by-${apiParentName}/${jpaEntity.id}`).then((res) => res.data || []),
+    findByParent: (apiParentName, jpaEntity) => axios.get(`${SERVER_URL}/api/${apiEndpointName}/by-${apiParentName}/${jpaEntity.id}`).then( async (res) => res.data || []),
+    findByParentWithPage: (apiParentName, jpaEntity, payload) => axios.get(`${SERVER_URL}/api/${apiEndpointName}/by-${apiParentName}/${jpaEntity.id}/page`,{params:payload}).then( async (res) => res.data || []),
     createOrUpdate: (jpaEntity) => {
         if (jpaEntity.id) {
             return axios.put(`${SERVER_URL}/api/${apiEndpointName}/${jpaEntity.id}`, jpaEntity).then((res) => res.data);
@@ -53,10 +81,9 @@ const createJpaService = (apiEndpointName) => ({
 
                 meta.messages = JSON.parse(meta.messagesJSON);
 
-                // if (field.type === 'enum') {
-                //     const json = JSON.parse(field.enumOptionsJSON);
-                //     field.options = json;
-                // }
+                // meta.createEmptyRecord  = () => (createEmptyRecord(meta.fields));
+
+
 
             }
             console.log(details);
@@ -81,7 +108,22 @@ const createJpaService = (apiEndpointName) => ({
             console.log(fields);
             return fields;
         });
+    },
+    findAllWithPage: async (payload) => {
+        return axios.get(`${SERVER_URL}/api/${apiEndpointName}/page`, {
+            params: payload
+        }).then((res) => {
+            return res.data || [];
+        });
     }
+    // ,
+    // getCreateEmptyRecord: async () => {
+    //     return await axios.get(`${SERVER_URL}/api/metadata/${apiEndpointName}/emptyrecord`).then(async (res) => {
+    //         const fields = res.data;
+    //
+    //         return fields;
+    //     });
+    // }
 });
 
 

@@ -1,5 +1,6 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useToast } from 'primevue/usetoast';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
@@ -7,6 +8,7 @@ import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import AuthService from '@/service/AuthService';
 
 import FileUpload from 'primevue/fileupload';
 import Image from 'primevue/image';
@@ -28,7 +30,16 @@ const props = defineProps({
     submitted: {
         type: Boolean,
         default: false
+    },
+    role: {
+        type: [String, Array],
+        default: null
     }
+});
+
+const isRoleAuthorized = computed(() => {
+    if (!props.role) return true;
+    return AuthService.hasRole(props.role);
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -125,6 +136,23 @@ const getRelationshipColumns = (field) => {
     ];
 };
 
+const toast = useToast();
+
+const getErrorMessage = (error, defaultMsg = 'An unexpected error occurred') => {
+    if (!error) return defaultMsg;
+    if (typeof error === 'string') return error;
+    if (error.response?.data) {
+        const data = error.response.data;
+        if (typeof data === 'string') return data;
+        if (data.message) return data.message;
+        if (data.error) return data.error;
+        if (Array.isArray(data.errors) && data.errors.length > 0) {
+            return data.errors.map(e => e.defaultMessage || e.message || JSON.stringify(e)).join(', ');
+        }
+    }
+    return error.message || defaultMsg;
+};
+
 const openRelationshipDialog = async (field) => {
     relationshipDialogField.value = field;
     relationshipDialogVisible.value = true;
@@ -142,6 +170,13 @@ const openRelationshipDialog = async (field) => {
         } else {
             relationshipDialogOptions.value = field.options || [];
         }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error Loading Options',
+            detail: getErrorMessage(error, 'Failed to load options from server'),
+            life: 5000
+        });
     } finally {
         relationshipDialogLoading.value = false;
     }
@@ -244,7 +279,8 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
 </script>
 
 <template>
-    <template v-for="field in fields" :key="field.name" >
+    <template v-if="isRoleAuthorized">
+        <template v-for="field in fields" :key="field.name" >
         <input v-if="isFieldHidden(field)" :id="field.name" :value="modelValue[field.name]" type="hidden" @input="updateField(field.name, $event.target.value)" />
 
         <div v-else-if="!field.editable" class="field">
@@ -346,13 +382,32 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
             @select="(e) => onFileSelect(e, field.name, field.fileNameField, field.contentTypeField)"
         />
 
+<!--        <Image-->
+<!--            v-if="field.type === 'image' && modelValue[field.name]"-->
+<!--            :src="modelValue[field.name]"-->
+<!--            preview-->
+<!--            imageClass="uploaded-image"-->
+<!--            width="250"-->
+<!--        />-->
+
+<!--        <Button-->
+<!--            v-if="field.type === 'file'"-->
+<!--            icon="pi pi-image"-->
+<!--            label="Download"-->
+<!--            link-->
+<!--            @click="downloadFile(-->
+<!--                                  slotProps.data.content,-->
+<!--                                  slotProps.data.fileName-->
+<!--                              )"-->
+<!--        />-->
+
         <small v-if="hasFieldError(field)" class="p-invalid">
           {{ field.label }} is required.
         </small>
       </div>
     </template>
     <Dialog v-model:visible="relationshipDialogVisible" :header="relationshipDialogField ? `Select ${relationshipDialogField.label}` : 'Select Record'" :modal="true" class="p-fluid" :style="{ width: '700px' }">
-        <GenericCrud :showToolbar="false" title="" dialogHeader="" :fields="relationshipDialogField?.optionsFields" :service="relationshipDialogField?.optionsService" @record-selected="rowSelectRelationshipRecord" />
+        <GenericCrud :showToolbar="true" title="" dialogHeader="" :fields="relationshipDialogField?.optionsFields" :service="relationshipDialogField?.optionsService" @record-selected="rowSelectRelationshipRecord" />
         <!--    <DataTable-->
         <!--        v-model:selection="relationshipDialogSelection"-->
         <!--        v-model:filters="relationshipDialogFilters"-->
@@ -395,6 +450,7 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
             <Button label="Select" icon="pi pi-check" type="button" :disabled="!relationshipDialogSelection" @click="selectRelationshipRecord" />
         </template>
     </Dialog>
+    </template>
 </template>
 
 <style>

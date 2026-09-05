@@ -1,55 +1,47 @@
 package org.saavy.services;
 
-import org.saavy.entity.ProductRepository;
-import org.saavy.entity.Stock;
-import org.saavy.entity.StockRepository;
-import org.saavy.entity.Supplier;
+import org.saavy.entity.*;
+import org.saavy.reference.BaseJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 @Service
-public class StockService implements JPAService<Stock, Long> {
-    
+public class StockService extends JPAService<Stock, StockDTO, Long> {
+
     @Autowired
     private StockRepository stockRepository;
-
     @Autowired
     private ProductRepository productRepository;
+    @Autowired
+    private SupplierRepository supplierRepository;
+    @Autowired
+    private ProductService productService;
+    @Autowired
+    private SupplierService supplierService;
 
     @Override
-    public List<Stock> findAll() {
-        return stockRepository.findAll();
+    protected BaseJpaRepository<Stock, Long> getJpaRepository() {
+        return stockRepository;
     }
 
     @Override
-    public Optional<Stock> findById(Long aLong) {
-        return stockRepository.findById(aLong);
+    public StockDTO toDTO(Stock entity) {
+        return new StockDTO(
+                entity.getId(),
+                productService.toDTO(entity.getProduct()),
+                supplierService.toDTO(entity.getSupplier()),
+                entity.getQuantity(),
+                entity.getDisplayValue()
+        );
     }
 
     @Override
-    public Stock save(Stock entity) {
-        return stockRepository.save(entity);
-    }
-
-    @Override
-    public Stock update(Long aLong, Stock entity) {
-        entity.setId(aLong);
-        return stockRepository.save(entity);
-    }
-
-    public List<Stock> findByParentId(String field, Long id) {
-        if(field.equals("product")){
-            return stockRepository.findAllByProduct(productRepository.findById(id));
-        }
-        return JPAService.super.findByParentId(field, id);
-    }
-
-    @Override
-    public void deleteById(Long aLong) {
-        stockRepository.deleteById(aLong);
+    public Stock toEntity(StockDTO dto, Long id) {
+        Stock stock = new Stock();
+        stock.setId(id != null ? id : dto.getId());
+        stock.setProduct(productRepository.getReferenceById(dto.getProduct().getId()));
+        stock.setSupplier(supplierRepository.getReferenceById(dto.getSupplier().getId()));
+        stock.setQuantity(dto.getQuantity());
+        return stock;
     }
 }

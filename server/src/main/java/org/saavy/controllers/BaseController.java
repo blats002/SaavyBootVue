@@ -1,61 +1,72 @@
-
 package org.saavy.controllers;
 
-import org.hibernate.Hibernate;
 import org.saavy.component.ParentFieldRegistry;
 import org.saavy.services.JPAService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Base controller for common CRUD operations
  */
-public abstract class BaseController<T, ID> {
+public abstract class BaseController<E, D, ID> {
 
     @Autowired
     private ParentFieldRegistry parentFieldRegistry;
 
-    protected abstract JPAService<T, ID> getService();
+    protected abstract JPAService<E, D, ID> getService();
 
     @GetMapping
-    public List<T> getAll() {
+    public List<D> getAll() {
         return getService().findAll();
     }
 
+    @GetMapping("/page")
+    public Page<D> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") int rows,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return getService().findAll(page, rows, search);
+    }
+
     @GetMapping("/by-{field}/{id}")
-    public List<T> findByParentId(
+    public List<D> findByParentId(
             @PathVariable String field,
             @PathVariable Long id
     ) {
-        return (List<T>) getService().findByParentId(field, (ID) id);
+        return (List<D>) getService().findByParentId(field, (ID) id);
     }
 
-
-    private Specification<T> byParent(String field, Long id) {
-        return (root, query, cb) ->
-                cb.equal(root.get(field).get("id"), id);
+    @GetMapping("/by-{field}/{id}/page")
+    public Page<D> findByParentIdWithPage(
+            @PathVariable String field,
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0") int rows,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        return getService().findByParentIdWithPage(field, (ID) id, page, rows, search);
     }
-
 
     @GetMapping("/{id}")
-    public T getById(@PathVariable ID id) {
-        Optional<T> entity = getService().findById(id);
+    public D getById(@PathVariable ID id) {
+        Optional<D> entity = getService().findById(id);
         return entity.orElse(null);
     }
 
     @PostMapping
-    public T save(@RequestBody T entity) {
-        return getService().save(entity);
+    public D save(@RequestBody D dto) {
+        return getService().save(dto);
     }
 
     @PutMapping("/{id}")
-    public T update(@RequestBody T entity, @PathVariable ID id) {
-        return getService().update(id, entity);
+    public D update(@RequestBody D dto, @PathVariable ID id) {
+        return getService().update(id, dto);
     }
 
     @DeleteMapping("/{id}")

@@ -18,10 +18,14 @@ import java.util.*;
 @Service
 public class UiFieldMetadataService {
 
-    private final Map<String, Class<?>> entityRegistry = Map.of(
-            "supplier", Supplier.class,
-            "product" , Product.class,
-            "stock" , Stock.class
+    private final Map<String, Class<?>> entityRegistry = Map.ofEntries(
+            Map.entry("users", UserDTO.class),
+            Map.entry("user", UserDTO.class),
+            Map.entry("roles", RoleDTO.class),
+            Map.entry("role", RoleDTO.class),
+            Map.entry("supplier", SupplierDTO.class),
+            Map.entry("product", ProductDTO.class),
+            Map.entry("stock", StockDTO.class)
     );
 
     public Map<String, Class<?>> getEntityRegistry() {

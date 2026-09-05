@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onBeforeMount, watch } from 'vue';
+import { ref, computed, onBeforeMount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useLayout } from '@/layout/composables/layout';
+import AuthService from '@/service/AuthService';
 
 const route = useRoute();
 
@@ -24,6 +25,16 @@ const props = defineProps({
         type: String,
         default: null
     }
+});
+
+const isVisible = computed(() => {
+    if (props.item.visible === false) {
+        return false;
+    }
+    if (props.item.role) {
+        return AuthService.hasRole(props.item.role);
+    }
+    return true;
 });
 
 const isActiveMenu = ref(false);
@@ -70,7 +81,7 @@ const checkActiveRoute = (item) => {
 </script>
 
 <template>
-    <li :class="{ 'layout-root-menuitem': root, 'active-menuitem': isActiveMenu }">
+    <li v-if="isVisible" :class="{ 'layout-root-menuitem': root, 'active-menuitem': isActiveMenu }">
         <div v-if="root && item.visible !== false" class="layout-menuitem-root-text">{{ item.label }}</div>
         <a v-if="(!item.to || item.items) && item.visible !== false" :href="item.url" @click="itemClick($event, item, index)" :class="item.class" :target="item.target" tabindex="0">
             <i :class="item.icon" class="layout-menuitem-icon"></i>

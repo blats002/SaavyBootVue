@@ -1,5 +1,6 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
+import AuthService from '@/service/AuthService';
 
 const props = defineProps({
     header: {
@@ -16,7 +17,16 @@ const props = defineProps({
         default: false
     },
     containerClass: null,
-    previewStyle: null
+    previewStyle: null,
+    role: {
+        type: [String, Array],
+        default: null
+    }
+});
+
+const isRoleAuthorized = computed(() => {
+    if (!props.role) return true;
+    return AuthService.hasRole(props.role);
 });
 
 const BlockView = reactive({
@@ -37,7 +47,7 @@ async function copyCode(event) {
 </script>
 
 <template>
-    <div class="block-section">
+    <div v-if="isRoleAuthorized" class="block-section">
         <div class="block-header">
             <span class="block-title">
                 <span>{{ header }}</span>

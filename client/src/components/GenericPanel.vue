@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import Panel from 'primevue/panel';
@@ -6,6 +7,7 @@ import Accordion from 'primevue/accordion';
 import TabView from 'primevue/tabview';
 import TabPanel from "primevue/tabpanel";
 import GenericCrud from "@/components/GenericCrud.vue";
+import AuthService from '@/service/AuthService';
 
 /*
      * GenericPanel bodyType usage:
@@ -93,7 +95,16 @@ const props = defineProps({
   tabs: {
     type: Array,
     default: () => []
+  },
+  role: {
+    type: [String, Array],
+    default: null
   }
+});
+
+const isRoleAuthorized = computed(() => {
+  if (!props.role) return true;
+  return AuthService.hasRole(props.role);
 });
 
 const emit = defineEmits(['button-click']);
@@ -107,7 +118,7 @@ const handleButtonClick = (button, section) => {
 </script>
 
 <template>
-  <div :class="cardClass">
+  <div v-if="isRoleAuthorized" :class="cardClass">
     <div v-if="showHeader && (title || subtitle)" class="generic-panel-header">
       <h5 v-if="title" class="generic-panel-title">
         {{ title }}

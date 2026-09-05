@@ -96,6 +96,8 @@ import { computed, useSlots } from 'vue';
  * </GroupLayout>
  */
 
+import AuthService from '@/service/AuthService';
+
 const props = defineProps({
   columns: {
     type: Number,
@@ -105,7 +107,16 @@ const props = defineProps({
   gapClass: {
     type: String,
     default: ''
+  },
+  role: {
+    type: [String, Array],
+    default: null
   }
+});
+
+const isRoleAuthorized = computed(() => {
+  if (!props.role) return true;
+  return AuthService.hasRole(props.role);
 });
 
 const slots = useSlots();
@@ -120,7 +131,7 @@ const getColumnClass = (columns) => {
 </script>
 
 <template>
-  <div :class="['grid', gapClass]">
+  <div v-if="isRoleAuthorized" :class="['grid', gapClass]">
     <div
         v-for="(slotItem, index) in defaultSlotItems"
         :key="index"

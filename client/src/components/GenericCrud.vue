@@ -1,10 +1,12 @@
 <script setup>
 import { FilterMatchMode } from 'primevue/api';
-import { ref, onBeforeMount, onMounted, watch } from 'vue';
+import { ref, computed, onBeforeMount, onMounted, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 import Image from 'primevue/image';
+import { debounce } from 'lodash';
+import AuthService from '@/service/AuthService';
 
 const props = defineProps({
     title: {
@@ -51,16 +53,42 @@ const props = defineProps({
             deleted: 'Record Deleted',
             deletedMany: 'Records Deleted'
         })
+    },
+    role: {
+        type: [String, Array],
+        default: null
+    },
+    showDetailButton: {
+        type: Boolean,
+        default: false
+    },
+    detailButtonIcon: {
+        type: String,
+        default: 'pi pi-list'
+    },
+    detailButtonTooltip: {
+        type: String,
+        default: 'View Details'
+    },
+    detailButtonClass: {
+        type: String,
+        default: 'p-button-rounded p-button-info mr-2'
     }
 });
 
-const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted']);
+const isRoleAuthorized = computed(() => {
+    if (!props.role) return true;
+    return AuthService.hasRole(props.role);
+});
+
+const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted', 'record-double-click', 'record-detail']);
 
 const toast = useToast();
 
 const records = ref([]);
 const record = ref({});
 const selectedRecords = ref(null);
+const totalRecords = ref(null);
 
 const getSelectionColumnMode = () => {
     return props.selectionMode === 'single' ? 'single' : 'multiple';
@@ -74,6 +102,12 @@ const deleteRecordDialog = ref(false);
 const deleteRecordsDialog = ref(false);
 
 const leftToolBarButtons = [
+    {
+      key: 'refresh',
+      label: 'New',
+      icon: 'pi pi-refresh',
+      class: 'p-button-success mr-2'
+    },
     {
         key: 'new',
         label: 'New',
@@ -125,20 +159,111 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-    loadRecords();
+  const payload = {
+    page: 0,
+    rows: 10
+  }
+  loadRecordsWithPage(payload);
 });
 
 watch(
     () => props.refreshKey,
     () => {
-        loadRecords();
+      onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
     }
 );
 
+watch(
+    () => filters.value?.global?.value,
+    debounce(() => {
+      onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
+    }, 300)
+);
+
+const getDataTableRows = () => {
+  return dataTableRef.value.d_rows?dataTableRef.value.d_rows:0
+}
+
+const refreshRecords = async () => {
+  const payload = {
+    page: checkCurrentPage(),
+    rows: getDataTableRows()
+  };
+  await loadRecordsWithPage(payload);
+};
+
+const checkCurrentPage = () => {
+  if (dataTableRef.value) {
+    // PrimeVue exposes 'd_rows' and 'd_first' as its internal state tracking
+    const first = dataTableRef.value.d_first;
+    const rows = dataTableRef.value.d_rows;
+
+    const pageIndex = (first / rows);
+    return pageIndex;
+  } else {
+    return 0;
+  }
+};
+
+const onPage = (event) => {
+  // event.first = starting index
+  // event.rows = number of rows per page
+  // event.page = current page index
+
+  const payload = {
+    page: event.page,
+    rows: event.rows,
+    search: filters.value?.global?.value
+  }
+
+  loadRecordsWithPage(payload)
+}
+
+const getErrorMessage = (error, defaultMsg = 'An unexpected error occurred') => {
+  if (!error) return defaultMsg;
+  if (typeof error === 'string') return error;
+  if (error.response?.data) {
+    const data = error.response.data;
+    if (typeof data === 'string') return data;
+    if (data.message) return data.message;
+    if (data.error) return data.error;
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      return data.errors.map(e => e.defaultMessage || e.message || JSON.stringify(e)).join(', ');
+    }
+  }
+  return error.message || defaultMsg;
+};
+
+const loadRecordsWithPage = async (payload) => {
+  try {
+    const pageable = await props.service.findAllWithPage(payload);
+    records.value = pageable?.content || [];
+    totalRecords.value = pageable?.totalElements || 0;
+    console.log(records.value);
+    emit('records-loaded', records.value);
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error Loading Records',
+      detail: getErrorMessage(error, 'Failed to load records from server'),
+      life: 5000
+    });
+  }
+};
+
 const loadRecords = async () => {
     if (props.service !== undefined) {
-        records.value = await props.service.findAll();
-        emit('records-loaded', records.value);
+        try {
+            records.value = await props.service.findAll();
+            emit('records-loaded', records.value);
+        } catch (error) {
+            toast.add({
+                severity: 'error',
+                summary: 'Error Loading Records',
+                detail: getErrorMessage(error, 'Failed to load records from server'),
+                life: 5000
+            });
+        }
     }
 };
 
@@ -150,6 +275,13 @@ const handleRowSelect = (event) => {
     emit('record-selected', event.data);
 };
 
+const handleRowDoubleClick = (event) => {
+  emit('record-double-click', event.data);
+};
+
+const handleDetailButtonClick = (selectedRecord) => {
+  emit('record-detail', selectedRecord);
+};
 
 const createEmptyFromFields = () => {
   return Object.fromEntries(
@@ -235,40 +367,49 @@ const saveRecord = async () => {
 
     const recordId = record.value[props.dataKey];
 
-    if (recordId) {
-        const updatedRecord = await props.service.createOrUpdate(record.value);
+    try {
+        if (recordId) {
+            const updatedRecord = await props.service.createOrUpdate(record.value);
 
-        const index = findIndexById(recordId);
+            const index = findIndexById(recordId);
 
-        if (index !== -1) {
-            records.value[index] = updatedRecord || { ...updatedRecord };
+            if (index !== -1) {
+                records.value[index] = updatedRecord || { ...updatedRecord };
+            }
+
+            emit('record-saved', updatedRecord);
+
+            toast.add({
+                severity: 'success',
+                summary: 'Successful',
+                detail: props.messages.updated,
+                life: 3000
+            });
+        } else {
+            const createdRecord = await props.service.createOrUpdate(record.value);
+
+            records.value.push(createdRecord);
+
+            emit('record-saved', createdRecord);
+
+            toast.add({
+                severity: 'success',
+                summary: 'Successful',
+                detail: props.messages.created,
+                life: 3000
+            });
         }
 
-        emit('record-saved', updatedRecord);
-
+        recordDialog.value = false;
+        record.value = props.createEmptyRecord();
+    } catch (error) {
         toast.add({
-            severity: 'success',
-            summary: 'Successful',
-            detail: props.messages.updated,
-            life: 3000
-        });
-    } else {
-        const createdRecord = await props.service.createOrUpdate(record.value);
-
-        records.value.push(createdRecord);
-
-        emit('record-saved', createdRecord);
-
-        toast.add({
-            severity: 'success',
-            summary: 'Successful',
-            detail: props.messages.created,
-            life: 3000
+            severity: 'error',
+            summary: 'Error Saving Record',
+            detail: getErrorMessage(error, 'Failed to save record'),
+            life: 5000
         });
     }
-
-    recordDialog.value = false;
-    record.value = props.createEmptyRecord();
 };
 
 const editRecord = (selectedRecord) => {
@@ -283,22 +424,31 @@ const confirmDeleteRecord = (selectedRecord) => {
 };
 
 const deleteRecord = async () => {
-    await props.service.delete(record.value[props.dataKey]);
+    try {
+        await props.service.delete(record.value[props.dataKey]);
 
-    const deletedRecord = record.value;
+        const deletedRecord = record.value;
 
-    records.value = records.value.filter((item) => item[props.dataKey] !== record.value[props.dataKey]);
-    deleteRecordDialog.value = false;
-    record.value = props.createEmptyRecord();
+        records.value = records.value.filter((item) => item[props.dataKey] !== record.value[props.dataKey]);
+        deleteRecordDialog.value = false;
+        record.value = props.createEmptyRecord();
 
-    emit('record-deleted', deletedRecord);
+        emit('record-deleted', deletedRecord);
 
-    toast.add({
-        severity: 'success',
-        summary: 'Successful',
-        detail: props.messages.deleted,
-        life: 3000
-    });
+        toast.add({
+            severity: 'success',
+            summary: 'Successful',
+            detail: props.messages.deleted,
+            life: 3000
+        });
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error Deleting Record',
+            detail: getErrorMessage(error, 'Failed to delete record'),
+            life: 5000
+        });
+    }
 };
 
 const confirmDeleteSelected = () => {
@@ -326,6 +476,10 @@ const handlePanelButtonClick = (button) => {
         return;
     }
 
+    if (button.key === 'refresh') {
+      refreshRecords();
+    }
+
     if (button.key === 'delete-selected') {
         confirmDeleteSelected();
     }
@@ -336,20 +490,29 @@ const deleteSelectedRecords = async () => {
         return;
     }
 
-    await Promise.all(selectedRecords.value.map((item) => props.service.delete(item[props.dataKey])));
+    try {
+        await Promise.all(selectedRecords.value.map((item) => props.service.delete(item[props.dataKey])));
 
-    const selectedIds = selectedRecords.value.map((item) => item[props.dataKey]);
-    records.value = records.value.filter((item) => !selectedIds.includes(item[props.dataKey]));
+        const selectedIds = selectedRecords.value.map((item) => item[props.dataKey]);
+        records.value = records.value.filter((item) => !selectedIds.includes(item[props.dataKey]));
 
-    deleteRecordsDialog.value = false;
-    selectedRecords.value = null;
+        deleteRecordsDialog.value = false;
+        selectedRecords.value = null;
 
-    toast.add({
-        severity: 'success',
-        summary: 'Successful',
-        detail: props.messages.deletedMany,
-        life: 3000
-    });
+        toast.add({
+            severity: 'success',
+            summary: 'Successful',
+            detail: props.messages.deletedMany,
+            life: 3000
+        });
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error Deleting Records',
+            detail: getErrorMessage(error, 'Failed to delete selected records'),
+            life: 5000
+        });
+    }
 };
 
 const handleFormDialogButton = (button) => {
@@ -466,28 +629,35 @@ const getFileHref = (value) => {
   return value.content || value;
 };
 
+const dataTableRef = ref();
+
 
 </script>
 
 <template>
-    <div class="grid">
-        <div class="col-12">
-            <GenericPanel :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getLeftToolBarButtons()" @button-click="handlePanelButtonClick">
+    <div v-if="isRoleAuthorized" class="grid">
+        <div class="col-12 h-full flex flex-column">
+            <GenericPanel class="flex-1" :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getLeftToolBarButtons()" @button-click="handlePanelButtonClick">
                 <Toast />
-
                 <DataTable
+                    ref="dataTableRef"
                     :value="records"
                     v-model:selection="selectedRecords"
                     :dataKey="dataKey"
                     :paginator="true"
                     :rows="10"
+                    :lazy="true"
                     :filters="filters"
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                    paginatorPosition="top"
                     :rowsPerPageOptions="[5, 10, 25]"
                     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+                    :totalRecords="totalRecords"
                     responsiveLayout="scroll"
                     @row-click="handleRowClick"
                     @row-select="handleRowSelect"
+                    @row-dblclick="handleRowDoubleClick"
+                    @page="onPage"
                 >
                     <template #header>
                         <div class="flex flex-column md:flex-row md:justify-content-end md:align-items-center">
@@ -499,6 +669,20 @@ const getFileHref = (value) => {
                     </template>
 
                     <Column v-if="showToolbar" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
+
+                    <Column v-if="showToolbar" headerStyle="min-width:12rem;">
+                      <template #body="slotProps">
+                        <Button icon="pi pi-pencil" v-tooltip.top="'Edit'" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
+                        <Button icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger" @click="confirmDeleteRecord(slotProps.data)" />
+                        <Button
+                            v-if="showDetailButton"
+                            :icon="detailButtonIcon"
+                            v-tooltip.top="detailButtonTooltip"
+                            :class="detailButtonClass"
+                            @click="handleDetailButtonClick(slotProps.data)"
+                        />
+                      </template>
+                    </Column>
 
                     <Column v-for="field in getTableFields()" :key="field.name" :field="field.name" :header="field.label" :sortable="field.sortable" :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`">
                         <template #body="slotProps">
@@ -541,13 +725,6 @@ const getFileHref = (value) => {
                           <div v-else>
                                 {{ getFieldDisplayValue(slotProps.data, field) }}
                               </div>
-                        </template>
-                    </Column>
-
-                    <Column v-if="showToolbar" headerStyle="min-width:10rem;">
-                        <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-rounded p-button-warning mt-2" @click="confirmDeleteRecord(slotProps.data)" />
                         </template>
                     </Column>
                 </DataTable>

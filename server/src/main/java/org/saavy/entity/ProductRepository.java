@@ -1,6 +1,6 @@
 package org.saavy.entity;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.saavy.reference.BaseJpaRepository;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends BaseJpaRepository<Product, Long> {
 }

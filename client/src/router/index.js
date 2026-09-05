@@ -148,6 +148,16 @@ const router = createRouter({
                     component: () => import('@/views/pages/ProductManagement.vue')
                 },
                 {
+                    path: '/pages/users',
+                    name: 'users',
+                    component: () => import('@/views/pages/UserManagement.vue')
+                },
+                {
+                    path: '/pages/roles',
+                    name: 'roles',
+                    component: () => import('@/views/pages/RoleManagement.vue')
+                },
+                {
                     path: '/documentation',
                     name: 'documentation',
                     component: () => import('@/views/utilities/Documentation.vue')
@@ -181,6 +191,34 @@ const router = createRouter({
             component: () => import('@/views/pages/auth/Error.vue')
         }
     ]
+});
+
+import AuthService from '@/service/AuthService';
+
+// Navigation guard for authenticated routes
+router.beforeEach((to, from, next) => {
+    const publicPages = ['/auth/login', '/landing', '/pages/notfound', '/auth/access', '/auth/error'];
+    const authRequired = !publicPages.includes(to.path);
+    const loggedIn = AuthService.isAuthenticated();
+
+    if (authRequired && !loggedIn) {
+        return next({
+            path: '/auth/login',
+            query: { redirect: to.fullPath }
+        });
+    }
+
+    if (to.path === '/auth/login' && loggedIn) {
+        return next('/');
+    }
+
+    // Role-based access control for Administration routes
+    const adminRoutes = ['/pages/users', '/pages/roles'];
+    if (adminRoutes.includes(to.path) && !AuthService.hasRole('ROLE_ADMIN')) {
+        return next('/auth/access');
+    }
+
+    next();
 });
 
 export default router;

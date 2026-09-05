@@ -1,16 +1,46 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
 import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import AuthService from '@/service/AuthService';
 import AppConfig from '@/layout/AppConfig.vue';
 
+const router = useRouter();
+const route = useRoute();
 const { layoutConfig } = useLayout();
-const email = ref('');
+
+const username = ref('');
 const password = ref('');
 const checked = ref(false);
+const loading = ref(false);
+const errorMessage = ref('');
 
 const logoUrl = computed(() => {
     return `layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
 });
+
+const handleLogin = async () => {
+    errorMessage.value = '';
+    if (!username.value || !password.value) {
+        errorMessage.value = 'Please enter both username and password.';
+        return;
+    }
+
+    loading.value = true;
+    try {
+        await AuthService.login(username.value, password.value);
+        const redirect = route.query.redirect || '/';
+        router.push(redirect);
+    } catch (error) {
+        if (error.response && error.response.status === 401) {
+            errorMessage.value = 'Invalid username or password.';
+        } else {
+            errorMessage.value = 'Login failed. Please check server connection and try again.';
+        }
+    } finally {
+        loading.value = false;
+    }
+};
 </script>
 
 <template>
@@ -21,26 +51,32 @@ const logoUrl = computed(() => {
                 <div class="w-full surface-card py-8 px-5 sm:px-8" style="border-radius: 53px">
                     <div class="text-center mb-5">
                         <img src="/demo/images/login/avatar.png" alt="Image" height="50" class="mb-3" />
-                        <div class="text-900 text-3xl font-medium mb-3">Welcome, Isabel!</div>
-                        <span class="text-600 font-medium">Sign in to continue</span>
+                        <div class="text-900 text-3xl font-medium mb-3">Welcome Back!</div>
+                        <span class="text-600 font-medium">Sign in to Invoice Management System</span>
                     </div>
 
-                    <div>
-                        <label for="email1" class="block text-900 text-xl font-medium mb-2">Email</label>
-                        <InputText id="email1" type="text" placeholder="Email address" class="w-full md:w-30rem mb-5" style="padding: 1rem" v-model="email" />
+                    <div v-if="errorMessage" class="p-message p-message-error mb-4">
+                        <div class="p-message-wrapper p-3 text-red-600 font-medium">
+                            <i class="pi pi-exclamation-circle mr-2"></i>
+                            {{ errorMessage }}
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="handleLogin">
+                        <label for="username" class="block text-900 text-xl font-medium mb-2">Username</label>
+                        <InputText id="username" type="text" placeholder="Username" class="w-full md:w-30rem mb-5" style="padding: 1rem" v-model="username" />
 
                         <label for="password1" class="block text-900 font-medium text-xl mb-2">Password</label>
-                        <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="w-full mb-3" inputClass="w-full" :inputStyle="{ padding: '1rem' }"></Password>
+                        <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" :feedback="false" class="w-full mb-3" inputClass="w-full" :inputStyle="{ padding: '1rem' }"></Password>
 
                         <div class="flex align-items-center justify-content-between mb-5 gap-5">
                             <div class="flex align-items-center">
                                 <Checkbox v-model="checked" id="rememberme1" binary class="mr-2"></Checkbox>
                                 <label for="rememberme1">Remember me</label>
                             </div>
-                            <a class="font-medium no-underline ml-2 text-right cursor-pointer" style="color: var(--primary-color)">Forgot password?</a>
                         </div>
-                        <Button label="Sign In" class="w-full p-3 text-xl"></Button>
-                    </div>
+                        <Button type="submit" label="Sign In" :loading="loading" class="w-full p-3 text-xl"></Button>
+                    </form>
                 </div>
             </div>
         </div>

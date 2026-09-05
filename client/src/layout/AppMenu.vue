@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-
 import AppMenuItem from './AppMenuItem.vue';
 
 const model = ref([
@@ -14,8 +13,26 @@ const model = ref([
             },
             {
                 label: 'Products',
-                icon: 'pi pi-fw pi-building',
+                icon: 'pi pi-fw pi-box',
                 to: '/pages/products'
+            }
+        ]
+    },
+    {
+        label: 'Administration',
+        role: 'ROLE_ADMIN',
+        items: [
+            {
+                label: 'Users',
+                role: 'ROLE_ADMIN',
+                icon: 'pi pi-fw pi-users',
+                to: '/pages/users'
+            },
+            {
+                label: 'Roles',
+                role: 'ROLE_ADMIN',
+                icon: 'pi pi-fw pi-shield',
+                to: '/pages/roles'
             }
         ]
     },

@@ -1,5 +1,8 @@
 <script setup>
+import { computed } from 'vue';
 import GenericForm from './GenericForm.vue';
+import AuthService from '@/service/AuthService';
+
 const props = defineProps({
     visible: {
         type: Boolean,
@@ -57,7 +60,16 @@ const props = defineProps({
     closeLabel: {
         type: String,
         default: 'Close'
+    },
+    role: {
+        type: [String, Array],
+        default: null
     }
+});
+
+const isRoleAuthorized = computed(() => {
+    if (!props.role) return true;
+    return AuthService.hasRole(props.role);
 });
 
 const emit = defineEmits([
@@ -183,7 +195,7 @@ const saveDialog = () => {
 
 <template>
     <Dialog
-        :visible="visible"
+        :visible="visible && isRoleAuthorized"
         :style="{ width }"
         :header="header"
         :modal="true"

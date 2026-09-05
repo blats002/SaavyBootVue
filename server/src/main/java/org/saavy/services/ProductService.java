@@ -1,44 +1,38 @@
 package org.saavy.services;
 
 import org.saavy.entity.Product;
+import org.saavy.entity.ProductDTO;
 import org.saavy.entity.ProductRepository;
-import org.saavy.entity.SupplierRepository;
+import org.saavy.reference.BaseJpaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-
-
 @Service
-public class ProductService implements JPAService<Product, Long> {
+public class ProductService extends JPAService<Product, ProductDTO, Long> {
 
     @Autowired
     private ProductRepository productRepository;
 
     @Override
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    protected BaseJpaRepository<Product, Long> getJpaRepository() {
+        return productRepository;
     }
 
     @Override
-    public Optional<Product> findById(Long aLong) {
-        return productRepository.findById(aLong);
+    public ProductDTO toDTO(Product entity) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setPrice(entity.getPrice());
+        return dto;
     }
 
     @Override
-    public Product save(Product entity) {
-        return productRepository.save(entity);
-    }
-
-    @Override
-    public Product update(Long aLong, Product entity) {
-        entity.setId(aLong);
-        return productRepository.save(entity);
-    }
-
-    @Override
-    public void deleteById(Long aLong) {
-        productRepository.deleteById(aLong);
+    public Product toEntity(ProductDTO dto, Long id) {
+        Product product = new Product();
+        product.setId(id != null ? id : dto.getId());
+        product.setName(dto.getName());
+        product.setPrice(dto.getPrice());
+        return product;
     }
 }

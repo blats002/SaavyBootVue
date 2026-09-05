@@ -1,104 +1,29 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import TabPanel from 'primevue/tabpanel';
 import GenericCrud from './GenericCrud.vue';
 import GenericPanel from './GenericPanel.vue';
 import TabView from 'primevue/tabview';
+import Dialog from 'primevue/dialog';
+import GroupLayout from './GroupLayout.vue';
+import AuthService from '@/service/AuthService';
 
 /**
  * GenericMasterDetail Component
  *
- * A reusable master-detail CRUD component that displays a master record list on the left
- * and related detail records in tabs on the right. When a master record is selected,
- * the detail tabs automatically load and filter data based on the selected parent.
- *
- * @component
- *
- * @example
- * // Basic usage with Ministry (master) and Teams (detail)
- * <GenericMasterDetail
- *   title="Ministry Management"
- *   subtitle="Manage ministries and their teams"
- *   :master="{
- *     title: 'Ministries',
- *     dialogHeader: 'Ministry',
- *     dataKey: 'id',
- *     fields: [
- *       { name: 'name', label: 'Name', type: 'text', required: true },
- *       { name: 'description', label: 'Description', type: 'textarea' },
- *       { name: 'active', label: 'Active', type: 'boolean' }
- *     ],
- *     service: ministryService,
- *     createEmptyRecord: () => ({ name: '', description: '', active: true })
- *   }"
- *   :details="[
- *     {
- *       key: 'teams',
- *       title: 'Teams',
- *       dialogHeader: 'Team',
- *       dataKey: 'id',
- *       parentField: 'ministry',
- *       fields: [
- *         { name: 'ministry', label: 'Ministry', type: 'reference', hidden: true },
- *         { name: 'name', label: 'Team Name', type: 'text', required: true },
- *         { name: 'description', label: 'Description', type: 'textarea' },
- *         { name: 'active', label: 'Active', type: 'boolean' }
- *       ],
- *       service: {
- *         findByParent: (ministry) => teamService.findByMinistryId(ministry.id),
- *         createOrUpdate: (team, ministry) => teamService.save({ ...team, ministry }),
- *         delete: (id) => teamService.delete(id)
- *       },
- *       createEmptyRecord: (ministry) => ({
- *         name: '',
- *         description: '',
- *         active: true,
- *         ministry
- *       })
- *     }
- *   ]"
- *   dataKey="id"
- * />
+ * A versatile master-detail CRUD component supporting two presentation modes:
+ * - 'split' (default): Side-by-side 2-column layout (master on left, detail tabs on right)
+ * - 'modal': Full-width master table with detail tabs rendered inside a popup modal dialog
  *
  * @prop {String} title - Main title displayed in the detail panel (default: 'Master Detail')
  * @prop {String} subtitle - Subtitle for the detail panel; if empty, shows selected master record label
  * @prop {Object} master - Configuration object for the master CRUD
- * @prop {String} master.title - Title for the master panel
- * @prop {String} master.dialogHeader - Header text for master record edit dialog
- * @prop {String} [master.dataKey='id'] - Primary key field name for master records
- * @prop {Array} master.fields - Field definitions for master CRUD (see GenericCrud for field structure)
- * @prop {Object} master.service - Service object with findAll, createOrUpdate, delete methods
- * @prop {Function} master.createEmptyRecord - Function returning empty master record template
- * @prop {Object} [master.messages] - Custom messages for master CRUD operations
- * @prop {String} [master.optionLabel] - Field name to use for displaying selected master label
- *
- * @prop {Array} details - Array of detail configuration objects for tabs
- * @prop {String} [details[].key] - Unique key for the detail tab (defaults to title)
- * @prop {String} details[].title - Title for the detail tab
- * @prop {String} details[].dialogHeader - Header text for detail record edit dialog
- * @prop {String} [details[].dataKey='id'] - Primary key field name for detail records
- * @prop {String} details[].parentField - Field name in detail record that references parent master
- * @prop {Array} details[].fields - Field definitions for detail CRUD
- * @prop {Object} details[].service - Service object for detail operations
- * @prop {Function} details[].service.findByParent - Fetch details by parent master record
- * @prop {Function} [details[].service.findAll] - Alternative method to fetch all details
- * @prop {Function} details[].service.createOrUpdate - Save detail record (receives record and parent)
- * @prop {Function} details[].service.delete - Delete detail record by ID
- * @prop {Function} [details[].createEmptyRecord] - Function returning empty detail record (receives parent)
- * @prop {Function} [details[].parentValue] - Custom function to extract parent value from master record
- * @prop {Object} [details[].messages] - Custom messages for detail CRUD operations
- *
- * @prop {String} [dataKey='id'] - Default primary key field name used when not specified in master/details
- *
- * @emits record-selected - Emitted from master CRUD when a record is selected (bubbled from GenericCrud)
- *
- * Features:
- * - Automatic parent-child relationship management
- * - Detail tabs only load data when master record is selected
- * - Parent field automatically hidden and populated in detail records
- * - Supports multiple detail tabs per master
- * - Refresh mechanism when master selection changes
- * - Custom parent value extraction via parentValue function
+ * @prop {Array} details - Array of detail configuration objects for child tabs
+ * @prop {String} [dataKey='id'] - Default primary key field name
+ * @prop {String|Array} [role=null] - Role(s) required to view component
+ * @prop {String} [layout='split'] - Presentation layout: 'split' (side-by-side) or 'modal' (dialog popup)
+ * @prop {String} [trigger='auto'] - Selection trigger: 'auto', 'click', or 'double-click'
+ * @prop {Object} [dialogStyle] - Dialog style object for modal mode (default: { width: '75vw' })
  */
 
 const props = defineProps({
@@ -121,11 +46,37 @@ const props = defineProps({
     dataKey: {
         type: String,
         default: 'id'
+    },
+    role: {
+        type: [String, Array],
+        default: null
+    },
+    layout: {
+        type: String,
+        default: 'split',
+        validator: (value) => ['split', 'modal'].includes(value)
+    },
+    trigger: {
+        type: String,
+        default: 'auto',
+        validator: (value) => ['auto', 'click', 'double-click'].includes(value)
+    },
+    dialogStyle: {
+        type: Object,
+        default: () => ({ width: '75vw' })
     }
 });
 
+const isRoleAuthorized = computed(() => {
+    if (!props.role) return true;
+    return AuthService.hasRole(props.role);
+});
+
+const isModal = computed(() => props.layout === 'modal');
+
 const selectedMasterRecord = ref(null);
 const detailRefreshKey = ref(0);
+const showDetailDialog = ref(false);
 
 const selectedMasterId = computed(() => {
     const masterDataKey = props.master.dataKey || props.dataKey;
@@ -139,17 +90,41 @@ const hasSelectedMaster = computed(() => {
 const handleMasterSelected = (record) => {
     selectedMasterRecord.value = record;
     detailRefreshKey.value += 1;
+
+    if (isModal.value && props.trigger === 'click') {
+        showDetailDialog.value = true;
+    }
 };
+
+const handleMasterDoubleClicked = (record) => {
+    selectedMasterRecord.value = record;
+    detailRefreshKey.value += 1;
+
+    if (isModal.value) {
+        showDetailDialog.value = true;
+    }
+};
+
+const handleMasterDetailClicked = (record) => {
+    selectedMasterRecord.value = record;
+    detailRefreshKey.value += 1;
+
+    if (isModal.value) {
+        showDetailDialog.value = true;
+    }
+};
+
+watch(showDetailDialog, (visible) => {
+    if (visible) {
+        detailRefreshKey.value += 1;
+    }
+});
 
 const getDetailKey = (detail) => {
     return `${detail.key || detail.title}-${selectedMasterId.value || 'none'}-${detailRefreshKey.value}`;
 };
 
 const getDetailTitle = (detail) => {
-    if (!hasSelectedMaster.value) {
-        return detail.title;
-    }
-
     return detail.title;
 };
 
@@ -184,6 +159,24 @@ const getDetailService = (detail) => {
                 return detail.service.delete(id, selectedMasterRecord.value);
             }
 
+            return null;
+        },
+        findAllWithPage: async (payload) => {
+            if (!hasSelectedMaster.value) {
+                return [];
+            }
+
+            if (detail.service?.findByParentWithPage) {
+                return await detail.service.findByParentWithPage(detail.parentField, selectedMasterRecord.value, payload);
+            }
+
+            if (detail.service?.findByParent) {
+                return await detail.service.findByParent(detail.parentField, selectedMasterRecord.value, payload);
+            }
+
+            if (detail.service?.findAllWithPage) {
+                return detail.service.findAllWithPage(payload);
+            }
             return null;
         }
     };
@@ -229,7 +222,6 @@ const applyParentToDetailRecord = (detail, record) => {
 const getDetailCreateEmptyRecord = (detail) => {
     return () => {
         const emptyRecord = detail.createEmptyRecord ? detail.createEmptyRecord(selectedMasterRecord.value) : {};
-
         return applyParentToDetailRecord(detail, emptyRecord);
     };
 };
@@ -251,54 +243,91 @@ const getMasterTitle = (master) => {
 </script>
 
 <template>
-    <GroupLayout class="p-fluid" :columns="2">
-        <GenericCrud
-            :title="getMasterTitle(master)"
-            :dialogHeader="master.dialogHeader"
-            :dataKey="master.dataKey || dataKey"
-            :fields="master.fields"
-            :service="master.service"
-            :createEmptyRecord="master.createEmptyRecord"
-            :messages="master.messages"
-            @record-selected="handleMasterSelected"
-        />
-        <GenericPanel :title="title" :subtitle="subtitle || getSelectedMasterLabel()" :showToolbar="false">
-            <TabView class="generic-panel-body">
-                <TabPanel v-for="detail in details" :key="getDetailKey(detail)" :header="getDetailTitle(detail)">
-                    <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">Select a parent record before managing {{ detail.title }}.</div>
-                    <GenericCrud
-                        v-else
-                        :key="getDetailKey(detail)"
-                        :refreshKey="detailRefreshKey"
-                        :title="detail.title"
-                        :dialogHeader="detail.dialogHeader"
-                        :dataKey="detail.dataKey || dataKey"
-                        :fields="getDetailFields(detail)"
-                        :service="getDetailService(detail)"
-                        :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
-                        :messages="detail.messages"
-                    />
-                </TabPanel>
-            </TabView>
+    <template v-if="isRoleAuthorized">
+        <!-- Modal / Dialog Layout -->
+        <template v-if="isModal">
+            <GenericCrud
+                class="col-12 h-full flex flex-column"
+                :title="getMasterTitle(master)"
+                :dialogHeader="master.dialogHeader"
+                :dataKey="master.dataKey || dataKey"
+                :fields="master.fields"
+                :service="master.service"
+                :createEmptyRecord="master.createEmptyRecord"
+                :messages="master.messages"
+                :showDetailButton="true"
+                :detailButtonTooltip="'View ' + (details?.[0]?.title || 'Details')"
+                @record-selected="handleMasterSelected"
+                @record-double-click="handleMasterDoubleClicked"
+                @record-detail="handleMasterDetailClicked"
+            />
 
-            <!--      <template v-for="detail in details" :key="getDetailKey(detail)" :name="detail.key" v-slot:{{detail.key}}>-->
+            <Dialog
+                v-model:visible="showDetailDialog"
+                :header="master.dialogHeader || title"
+                modal
+                closable
+                :style="dialogStyle"
+                :maximizable="true"
+            >
+                <GenericPanel class="col-12 h-full flex flex-column" :title="title" :subtitle="subtitle || getSelectedMasterLabel()" :showToolbar="false">
+                    <TabView class="generic-panel-body">
+                        <TabPanel v-for="detail in details" :key="getDetailKey(detail)" :header="getDetailTitle(detail)">
+                            <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">Select a parent record before managing {{ detail.title }}.</div>
+                            <GenericCrud
+                                v-else
+                                :key="getDetailKey(detail)"
+                                :refreshKey="detailRefreshKey"
+                                :title="detail.title"
+                                :dialogHeader="detail.dialogHeader"
+                                :dataKey="detail.dataKey || dataKey"
+                                :fields="getDetailFields(detail)"
+                                :service="getDetailService(detail)"
+                                :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
+                                :messages="detail.messages"
+                            />
+                        </TabPanel>
+                    </TabView>
+                </GenericPanel>
+            </Dialog>
+        </template>
 
-            <!--        <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">-->
-            <!--          Select a parent record before managing {{ detail.title }}.-->
-            <!--        </div>-->
-            <!--        <GenericCrud-->
-            <!--            v-else-->
-            <!--            :key="getDetailKey(detail)"-->
-            <!--            :refreshKey="detailRefreshKey"-->
-            <!--            :title="detail.title"-->
-            <!--            :dialogHeader="detail.dialogHeader"-->
-            <!--            :dataKey="detail.dataKey || dataKey"-->
-            <!--            :fields="getDetailFields(detail)"-->
-            <!--            :service="getDetailService(detail)"-->
-            <!--            :createEmptyRecord="getDetailCreateEmptyRecord(detail)"-->
-            <!--            :messages="detail.messages"-->
-            <!--        />-->
-            <!--      </template>-->
-        </GenericPanel>
-    </GroupLayout>
+        <!-- Side-by-Side (Split 2-column) Layout -->
+        <template v-else>
+            <GroupLayout class="p-fluid" :columns="2">
+                <GenericCrud
+                    class="col-12 h-full flex flex-column"
+                    :title="getMasterTitle(master)"
+                    :dialogHeader="master.dialogHeader"
+                    :dataKey="master.dataKey || dataKey"
+                    :fields="master.fields"
+                    :service="master.service"
+                    :createEmptyRecord="master.createEmptyRecord"
+                    :messages="master.messages"
+                    @record-selected="handleMasterSelected"
+                    @record-double-click="handleMasterDoubleClicked"
+                    @record-detail="handleMasterDetailClicked"
+                />
+                <GenericPanel class="col-12 h-full flex flex-column" :title="title" :subtitle="subtitle || getSelectedMasterLabel()" :showToolbar="false">
+                    <TabView class="generic-panel-body">
+                        <TabPanel v-for="detail in details" :key="getDetailKey(detail)" :header="getDetailTitle(detail)">
+                            <div v-if="!hasSelectedMaster" class="p-3 text-color-secondary">Select a parent record before managing {{ detail.title }}.</div>
+                            <GenericCrud
+                                v-else
+                                :key="getDetailKey(detail)"
+                                :refreshKey="detailRefreshKey"
+                                :title="detail.title"
+                                :dialogHeader="detail.dialogHeader"
+                                :dataKey="detail.dataKey || dataKey"
+                                :fields="getDetailFields(detail)"
+                                :service="getDetailService(detail)"
+                                :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
+                                :messages="detail.messages"
+                            />
+                        </TabPanel>
+                    </TabView>
+                </GenericPanel>
+            </GroupLayout>
+        </template>
+    </template>
 </template>
