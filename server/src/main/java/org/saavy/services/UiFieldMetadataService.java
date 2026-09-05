@@ -6,27 +6,45 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import org.saavy.component.*;
 import org.saavy.entity.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class UiFieldMetadataService {
 
-    private final Map<String, Class<?>> entityRegistry = Map.ofEntries(
-            Map.entry("users", UserDTO.class),
-            Map.entry("user", UserDTO.class),
-            Map.entry("roles", RoleDTO.class),
-            Map.entry("role", RoleDTO.class),
-            Map.entry("supplier", SupplierDTO.class),
-            Map.entry("product", ProductDTO.class),
-            Map.entry("stock", StockDTO.class)
-    );
+    private final Map<String, Class<?>> entityRegistry = new ConcurrentHashMap<>();
+
+    @Autowired
+    public UiFieldMetadataService(@Autowired(required = false) List<EntityRegistryProvider> providers) {
+        // 1. Register core built-in entities
+        entityRegistry.put("supplier", SupplierDTO.class);
+        entityRegistry.put("product", ProductDTO.class);
+        entityRegistry.put("stock", StockDTO.class);
+        entityRegistry.put("users", UserDTO.class);
+        entityRegistry.put("user", UserDTO.class);
+        entityRegistry.put("roles", RoleDTO.class);
+        entityRegistry.put("role", RoleDTO.class);
+
+        // 2. Automatically register all downstream domain entities provided by Spring components
+        if (providers != null) {
+            for (EntityRegistryProvider provider : providers) {
+                if (provider != null && provider.getEntities() != null) {
+                    entityRegistry.putAll(provider.getEntities());
+                }
+            }
+        }
+    }
+
+    public void registerEntity(String name, Class<?> clazz) {
+        entityRegistry.put(name, clazz);
+    }
 
     public Map<String, Class<?>> getEntityRegistry() {
         return entityRegistry;
@@ -50,7 +68,6 @@ public class UiFieldMetadataService {
 
     private UiDetailMetadata toUiDetailMetadata(Field field) {
         UiDetail detail = field.getAnnotation(UiDetail.class);
-        Column column = field.getAnnotation(Column.class);
 
         return new UiDetailMetadata(
                 detail.key(),
@@ -83,11 +100,9 @@ public class UiFieldMetadataService {
 
     public boolean hasMethod(Class cls, String methodName) {
         try {
-            // Look for the method (assuming no parameters)
             Method method = cls.getMethod(methodName);
             return method != null;
         } catch (NoSuchMethodException e) {
-            // Method does not exist
             return false;
         }
     }
