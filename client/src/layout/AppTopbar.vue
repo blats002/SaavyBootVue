@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useLayout } from '@/layout/composables/layout';
+import { useLayout } from './composables/layout';
 import { useRouter } from 'vue-router';
 
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 const { layoutConfig, onMenuToggle } = useLayout();
 

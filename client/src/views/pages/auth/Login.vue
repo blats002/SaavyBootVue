@@ -1,9 +1,9 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
+import { useLayout } from '../../../layout/composables/layout';
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import AuthService from '@/service/AuthService';
-import AppConfig from '@/layout/AppConfig.vue';
+import AuthService from '../../../service/AuthService';
+import AppConfig from '../../../layout/AppConfig.vue';
 
 const router = useRouter();
 const route = useRoute();

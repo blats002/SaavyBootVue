@@ -8,7 +8,7 @@ import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 import FileUpload from 'primevue/fileupload';
 import Image from 'primevue/image';
@@ -16,7 +16,7 @@ import Image from 'primevue/image';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { FilterMatchMode } from 'primevue/api';
-import GenericCrud from '@/components/GenericCrud.vue';
+import GenericCrud from './GenericCrud.vue';
 
 const props = defineProps({
     fields: {

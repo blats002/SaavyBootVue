@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { QrcodeStream } from 'vue-qrcode-reader';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 const props = defineProps({
   role: {

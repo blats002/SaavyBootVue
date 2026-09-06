@@ -51,22 +51,18 @@
 
     <changeSet author="saavy" id="security-seed-002">
         <insert tableName="roles">
-            <column name="id" valueNumeric="1"/>
             <column name="name" value="ROLE_ADMIN"/>
             <column name="description" value="Administrator with full access"/>
         </insert>
         <insert tableName="roles">
-            <column name="id" valueNumeric="2"/>
             <column name="name" value="ROLE_MANAGER"/>
             <column name="description" value="Manager with invoice &amp; inventory access"/>
         </insert>
         <insert tableName="roles">
-            <column name="id" valueNumeric="3"/>
             <column name="name" value="ROLE_USER"/>
             <column name="description" value="Standard user"/>
         </insert>
         <insert tableName="users">
-            <column name="id" valueNumeric="1"/>
             <column name="username" value="admin"/>
             <!-- password is admin123 (BCrypt encoded) -->
             <column name="password" value="$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2"/>
@@ -130,4 +126,7 @@
     <changeSet author="Ramil (generated)" id="1778512693231-6">
         <addForeignKeyConstraint baseColumnNames="supplier_id" baseTableName="stock" constraintName="FKl2fbubw80ojtirp051oms6piu" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="supplier" validate="true"/>
     </changeSet>
+
+    <!-- Dynamic Plugin Changelogs -->
+    <includeAll path="db/changelog/plugins" errorIfMissingOrEmpty="false"/>
 </databaseChangeLog>

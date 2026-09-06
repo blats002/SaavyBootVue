@@ -2,7 +2,7 @@
 <script setup>
 import { computed } from 'vue';
 import Card from "primevue/card";
-import AuthService from '@/service/AuthService';
+import AuthService from '../../service/AuthService';
 
 const props = defineProps({
   title: String,

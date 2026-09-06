@@ -3,29 +3,23 @@ apply plugin: 'com.github.node-gradle.node'
 node {
     version = '22.12.0'
     npmVersion = '8.19.4'
-    download = true
+    download = false
 }
 
-tasks.register('serve', NpmTask) {
+tasks.register('serve', com.github.gradle.node.npm.task.NpmTask) {
     group = 'application'
     description = 'Run the client app'
     args = ['run', 'dev']
 }
 
-tasks.register('build', NpmTask) {
+tasks.register('build', com.github.gradle.node.npm.task.NpmTask) {
     group = 'build'
     description = 'Build the client bundle'
     args = ['run', 'build']
 }
 
-tasks.register('lint', NpmTask) {
+tasks.register('lint', com.github.gradle.node.npm.task.NpmTask) {
     group = 'build'
     description = 'Run eslint'
     args = ['run', 'lint']
-}
-
-tasks.register('audit', NpmTask) {
-    group = 'build'
-    description = 'Run npm audit'
-    args = ['audit', 'fix', '--force']
 }

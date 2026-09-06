@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onBeforeMount, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useLayout } from '@/layout/composables/layout';
-import AuthService from '@/service/AuthService';
+import { useLayout } from './composables/layout';
+import AuthService from '../service/AuthService';
 
 const route = useRoute();
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import AuthService from '@/service/AuthService';
+import AuthService from './AuthService';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
 
@@ -40,7 +40,12 @@ const createJpaService = (apiEndpointName) => ({
 
         return axios.post(`${SERVER_URL}/api/${apiEndpointName}`, jpaEntity).then((res) => res.data);
     },
-    delete: (id) => axios.delete(`${SERVER_URL}/api/${apiEndpointName}/${id}`),
+    delete: (idOrPayload) => {
+        if (typeof idOrPayload === 'object' && idOrPayload !== null) {
+            return axios.delete(`${SERVER_URL}/api/${apiEndpointName}`, { data: idOrPayload});
+        }
+        return axios.delete(`${SERVER_URL}/api/${apiEndpointName}/${idOrPayload}`);
+    },
     getMasterMeta: async () => {
         return await axios.get(`${SERVER_URL}/api/metadata/${apiEndpointName}/mastermeta`).then(async (res) => {
             const meta = res.data;
@@ -72,19 +77,13 @@ const createJpaService = (apiEndpointName) => ({
                     name: entity[json[json.name]]
                 });
 
-
-
                 const jpaService = createJpaService(meta.detailEndpoint);
                 meta.service = jpaService;
 
                 meta.fields = await jpaService.getFieldsMeta();
 
                 meta.messages = JSON.parse(meta.messagesJSON);
-
-                // meta.createEmptyRecord  = () => (createEmptyRecord(meta.fields));
-
-
-
+                meta.deleteWithPayload = meta.deleteWithPayload || false;
             }
             console.log(details);
             return details;

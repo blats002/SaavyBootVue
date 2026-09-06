@@ -1,6 +1,6 @@
 <script setup>
-import GenericCrud from '@/components/GenericCrud.vue';
-import roleService, { createEmptyRole } from '@/service/JPARoleService';
+import GenericCrud from '../../components/GenericCrud.vue';
+import roleService, { createEmptyRole } from '../../service/JPARoleService';
 import { onMounted, ref } from 'vue';
 
 const fields = ref([]);

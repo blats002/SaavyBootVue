@@ -22,6 +22,8 @@ public class UserService extends JPAService<User, UserDTO, Long> {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
 
     @Override
     protected BaseJpaRepository<User, Long> getJpaRepository() {
@@ -38,11 +40,6 @@ public class UserService extends JPAService<User, UserDTO, Long> {
                 .map(r -> new RoleDTO(r.getId(), r.getName(), r.getDescription()))
                 .collect(Collectors.toSet());
 
-        RoleDTO primaryRole = null;
-        if (!entity.getRoles().isEmpty()) {
-            Role r = entity.getRoles().iterator().next();
-            primaryRole = new RoleDTO(r.getId(), r.getName(), r.getDescription());
-        }
 
         UserDTO dto = new UserDTO();
         dto.setId(entity.getId());
@@ -51,9 +48,16 @@ public class UserService extends JPAService<User, UserDTO, Long> {
         dto.setEmail(entity.getEmail());
         dto.setPassword(null); // Don't expose password
         dto.setEnabled(entity.getEnabled());
-        dto.setRole(primaryRole);
         dto.setRoles(roleDTOs);
         dto.setDisplayString(entity.getFullName() != null ? entity.getFullName() : entity.getUsername());
+
+        java.util.List<UserRoleDTO> userRoleDTOs = userRepository.findById(entity.getId())
+                .map(user -> user.getRoles().stream()
+                        .map(r -> new UserRoleDTO(dto, roleService.toDTO(r)))
+                        .collect(Collectors.toList()))
+                .orElse(java.util.Collections.emptyList());
+
+        dto.setUserRoles(userRoleDTOs);
 
         return dto;
     }
@@ -89,11 +93,7 @@ public class UserService extends JPAService<User, UserDTO, Long> {
 
         // Roles handling
         Set<Role> roles = new HashSet<>();
-        if (dto.getRole() != null && dto.getRole().getId() != null) {
-            roleRepository.findById(dto.getRole().getId()).ifPresent(roles::add);
-        } else if (dto.getRole() != null && StringUtils.isNotBlank(dto.getRole().getName())) {
-            roleRepository.findByName(dto.getRole().getName()).ifPresent(roles::add);
-        } else if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+        if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
             for (RoleDTO rDto : dto.getRoles()) {
                 if (rDto.getId() != null) {
                     roleRepository.findById(rDto.getId()).ifPresent(roles::add);
@@ -113,6 +113,49 @@ public class UserService extends JPAService<User, UserDTO, Long> {
         }
 
         return entity;
+    }
+
+//    public java.util.List<UserRoleDTO> getUserRolesByUserId(Long userId) {
+//        return userRepository.findById(userId)
+//                .map(user -> user.getRoles().stream()
+//                        .map(r -> new UserRoleDTO(toDTO(user), roleService.toDTO(r)))
+//                        .collect(Collectors.toList()))
+//                .orElse(java.util.Collections.emptyList());
+//    }
+
+    public java.util.List<UserRoleDTO> getUserRolesByUserId(Long userId) {
+        return userRepository.findById(userId)
+                .map(user -> {
+                    // Create a simple UserDTO without userRoles to avoid recursion
+                    UserDTO userDTO = new UserDTO();
+                    userDTO.setId(user.getId());
+                    userDTO.setUsername(user.getUsername());
+                    userDTO.setFullName(user.getFullName());
+                    userDTO.setEmail(user.getEmail());
+                    userDTO.setEnabled(user.getEnabled());
+                    userDTO.setDisplayString(user.getFullName() != null ? user.getFullName() : user.getUsername());
+
+                    return user.getRoles().stream()
+                            .map(r -> new UserRoleDTO(userDTO, roleService.toDTO(r)))
+                            .collect(Collectors.toList());
+                })
+                .orElse(java.util.Collections.emptyList());
+    }
+
+    public org.springframework.data.domain.Page<UserRoleDTO> getUserRolesByUserIdWithPage(Long userId, int page, int rows, String search) {
+        java.util.List<UserRoleDTO> roles = getUserRolesByUserId(userId);
+        if (StringUtils.isNotBlank(search)) {
+            String lowerSearch = search.toLowerCase();
+            roles = roles.stream()
+                    .filter(r -> (r.getRole().getName() != null && r.getRole().getName().toLowerCase().contains(lowerSearch)) ||
+                            (r.getRole().getDescription() != null && r.getRole().getDescription().toLowerCase().contains(lowerSearch)))
+                    .collect(Collectors.toList());
+        }
+        int pageSize = rows > 0 ? rows : (roles.isEmpty() ? 10 : roles.size());
+        int start = Math.min(page * pageSize, roles.size());
+        int end = Math.min(start + pageSize, roles.size());
+        java.util.List<UserRoleDTO> subList = roles.subList(start, end);
+        return new org.springframework.data.domain.PageImpl<>(subList, org.springframework.data.domain.PageRequest.of(page, pageSize), roles.size());
     }
 
     public java.util.List<RoleDTO> getRolesByUserId(Long userId) {
@@ -139,21 +182,13 @@ public class UserService extends JPAService<User, UserDTO, Long> {
         return new org.springframework.data.domain.PageImpl<>(subList, org.springframework.data.domain.PageRequest.of(page, pageSize), roles.size());
     }
 
-    public UserDTO assignRole(Long userId, Long roleId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + roleId));
-        user.getRoles().add(role);
-        User saved = userRepository.save(user);
-        return toDTO(saved);
-    }
-
-    public UserDTO removeRole(Long userId, Long roleId) {
+    public void removeRole(Long userId, Long roleId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.getRoles().removeIf(r -> r.getId().equals(roleId));
         User saved = userRepository.save(user);
-        return toDTO(saved);
+        if(saved.getRoles().contains(roleRepository.getReferenceById(roleId))){
+            throw new RuntimeException("Role was not removed from user with id: " + userId);
+        }
     }
 }

@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import GenericForm from './GenericForm.vue';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 const props = defineProps({
     visible: {

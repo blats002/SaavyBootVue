@@ -2,9 +2,11 @@ package org.saavy.controllers;
 
 import org.saavy.entity.User;
 import org.saavy.entity.UserDTO;
+import org.saavy.entity.UserRoleDTO;
 import org.saavy.services.JPAService;
 import org.saavy.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +21,5 @@ public class UserController extends BaseController<User, UserDTO, Long> {
     @Override
     protected JPAService<User, UserDTO, Long> getService() {
         return userService;
-    }
-
-    @PostMapping("/{userId}/roles/{roleId}")
-    public UserDTO assignRoleToUser(@PathVariable Long userId, @PathVariable Long roleId) {
-        return userService.assignRole(userId, roleId);
-    }
-
-    @DeleteMapping("/{userId}/roles/{roleId}")
-    public UserDTO removeRoleFromUser(@PathVariable Long userId, @PathVariable Long roleId) {
-        return userService.removeRole(userId, roleId);
     }
 }

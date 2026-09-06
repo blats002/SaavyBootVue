@@ -1,4 +1,4 @@
-import createJpaService from '@/service/JPAService';
+import createJpaService from './JPAService';
 
 const jpaService = createJpaService('product');
 
