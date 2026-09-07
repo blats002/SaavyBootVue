@@ -46,7 +46,14 @@ dependencies {
     liquibaseRuntime 'mysql:mysql-connector-java:8.0.32'
     liquibaseRuntime 'com.h2database:h2'
     liquibaseRuntime 'info.picocli:picocli:4.7.5'
+
+    // Dynamically include all discovered plugins in plugins/*-plugin/server at runtime
+    rootProject.subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }.each { pluginProj ->
+        runtimeOnly pluginProj
+    }
+
 }
+
 
 tasks.named('test') {
     useJUnitPlatform()
@@ -93,16 +100,6 @@ bootRun {
     args = ['--spring.profiles.active=development']
     mainClass = 'org.saavy.SpringBootVueApplication'
     systemProperty 'liquibase.duplicateFileMode', 'WARN'
-    if (rootProject.findProject(':server') != null && rootProject.findProject(':server') != project) {
-        classpath += rootProject.project(':server').sourceSets.main.output
-        if (file("${projectDir}/plugins").exists()) {
-            classpath += files(fileTree(dir: "${projectDir}/plugins", include: '*.jar', exclude: 'invoice-plugin*.jar'))
-        }
-    } else {
-        if (file("${projectDir}/plugins").exists()) {
-            classpath += files(fileTree(dir: "${projectDir}/plugins", include: '*.jar'))
-        }
-    }
 }
 
 tasks.register('bootRunDebug', JavaExec) {
@@ -113,22 +110,27 @@ tasks.register('bootRunDebug', JavaExec) {
     mainClass = 'org.saavy.SpringBootVueApplication'
     classpath = sourceSets.main.runtimeClasspath
     systemProperty 'liquibase.duplicateFileMode', 'WARN'
-    if (rootProject.findProject(':server') != null && rootProject.findProject(':server') != project) {
-        classpath += rootProject.project(':server').sourceSets.main.output
-        if (file("${projectDir}/plugins").exists()) {
-            classpath += files(fileTree(dir: "${projectDir}/plugins", include: '*.jar', exclude: 'invoice-plugin*.jar'))
-        }
-    } else {
-        if (file("${projectDir}/plugins").exists()) {
-            classpath += files(fileTree(dir: "${projectDir}/plugins", include: '*.jar'))
-        }
-    }
 
     args = ['--spring.profiles.active=development']
     jvmArgs = [
             '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
     ]
 }
+
+gradle.projectsEvaluated {
+    rootProject.subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }.each { pluginProj ->
+        tasks.named('bootRun').configure {
+            dependsOn pluginProj.tasks.matching { it.name == 'classes' }
+            classpath += pluginProj.sourceSets.main.output
+        }
+        tasks.named('bootRunDebug').configure {
+            dependsOn pluginProj.tasks.matching { it.name == 'classes' }
+            classpath += pluginProj.sourceSets.main.output
+        }
+    }
+}
+
+
 
 def liquibaseDiffChangeLogFile = 'src/main/resources/db/changelog/generated-jpa-diff-changelog.xml'
 def liquibaseSearchPath = "${projectDir},${projectDir}/src/main/resources"

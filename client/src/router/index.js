@@ -1,26 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '../layout/AppLayout.vue';
 import AuthService from '../service/AuthService';
+import { getPluginRoutes, getPluginDashboard } from '../plugins/pluginLoader';
 
 export function createSaavyRouter(config = {}) {
-    const customRoutes = config.routes || [];
-    const dashboardComponent = config.dashboard || (() => import('../views/Dashboard.vue'));
+    const customRoutes = [...getPluginRoutes(), ...(config.routes || [])];
+    const dashboardComponent = config.dashboard || getPluginDashboard() || (() => import('../views/Dashboard.vue'));
+
 
     const baseChildren = [
         {
             path: '/',
             name: 'dashboard',
             component: dashboardComponent
-        },
-        {
-            path: '/pages/suppliers',
-            name: 'supplier',
-            component: () => import('../views/pages/SupplierManagement.vue')
-        },
-        {
-            path: '/pages/products',
-            name: 'product',
-            component: () => import('../views/pages/ProductManagement.vue')
         },
         {
             path: '/pages/users',

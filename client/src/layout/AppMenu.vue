@@ -2,20 +2,12 @@
 import { computed } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import { menuState } from './menuConfig';
+import { getPluginMenus } from '../plugins/pluginLoader';
 
 const defaultHomeMenu = {
     label: 'Home',
     items: [
-        {
-            label: 'Suppliers',
-            icon: 'pi pi-fw pi-building',
-            to: '/pages/suppliers'
-        },
-        {
-            label: 'Products',
-            icon: 'pi pi-fw pi-box',
-            to: '/pages/products'
-        }
+
     ]
 };
 
@@ -39,14 +31,17 @@ const adminMenu = {
 };
 
 const model = computed(() => {
+    const pluginMenus = getPluginMenus();
     if (menuState.customMenu && menuState.customMenu.length > 0) {
         return [
             ...menuState.customMenu,
+            ...pluginMenus,
             adminMenu
         ];
     }
     return [
-        defaultHomeMenu,
+        // defaultHomeMenu,
+        ...pluginMenus,
         adminMenu
     ];
 });

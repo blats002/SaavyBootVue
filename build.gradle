@@ -1,0 +1,40 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.14' apply false
+    id 'io.spring.dependency-management' version '1.1.6' apply false
+    id 'org.liquibase.gradle' version '2.2.2' apply false
+    id 'com.github.node-gradle.node' version '3.5.1' apply false
+}
+
+// ============================================================================
+// Top-Level Delegation Tasks
+// ============================================================================
+
+tasks.register('bootRun') {
+    group = 'application'
+    description = 'Runs the Spring Boot server with all active plugins mounted'
+    dependsOn ':server:bootRun'
+}
+
+tasks.register('bootRunDebug') {
+    group = 'application'
+    description = 'Runs the Spring Boot server with remote JVM debugging on port 5005 and all plugins mounted'
+    dependsOn ':server:bootRunDebug'
+}
+
+tasks.register('serve') {
+    group = 'client'
+    description = 'Starts the client development server (Vite dev) with all plugins'
+    dependsOn ':client:serve'
+}
+
+tasks.register('buildClient') {
+    group = 'client'
+    description = 'Builds the client frontend bundle'
+    dependsOn ':client:build'
+}
+
+tasks.register('clean') {
+    group = 'build'
+    description = 'Cleans build directories for host and all plugins'
+    dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'clean' } }
+}

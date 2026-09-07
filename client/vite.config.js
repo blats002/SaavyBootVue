@@ -26,6 +26,7 @@ export default defineConfig(() => {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url)),
                 '@core': fileURLToPath(new URL('./src', import.meta.url)),
+                '@plugins': path.resolve(__dirname, '../plugins'),
                 '@app-config': appConfigPath,
                 'vue': fileURLToPath(new URL('./node_modules/vue', import.meta.url)),
                 'axios': fileURLToPath(new URL('./node_modules/axios', import.meta.url)),
@@ -34,11 +35,12 @@ export default defineConfig(() => {
         },
         server: {
             fs: {
-                allow: ['..', '../../..']
+                allow: ['..', '../plugins', '../../plugins', '../../..']
             }
         },
         build: {
             target: 'esnext'
         }
+
     };
 });

@@ -26,3 +26,17 @@ pluginManagement{
 
 rootProject.name = 'SaavyBootVue'
 include 'client', 'server'
+
+// Auto-discover and register all plugin server modules in plugins/
+def pluginsDir = file('plugins')
+if (pluginsDir.exists() && pluginsDir.isDirectory()) {
+    pluginsDir.listFiles().each { pluginDir ->
+        def serverDir = new File(pluginDir, 'server')
+        if (pluginDir.isDirectory() && serverDir.exists() && new File(serverDir, 'build.gradle').exists()) {
+            def projectName = ":plugins:${pluginDir.name}:server"
+            include projectName
+            project(projectName).projectDir = serverDir
+        }
+    }
+}
+

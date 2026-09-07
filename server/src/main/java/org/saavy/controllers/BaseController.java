@@ -15,8 +15,9 @@ import java.util.Optional;
  */
 public abstract class BaseController<E, D, ID> {
 
-    @Autowired
+    @Autowired(required = false)
     private ParentFieldRegistry parentFieldRegistry;
+
 
     protected abstract JPAService<E, D, ID> getService();
 
