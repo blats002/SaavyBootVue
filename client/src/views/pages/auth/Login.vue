@@ -1,23 +1,19 @@
 <script setup>
 import { useLayout } from '../../../layout/composables/layout';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import AuthService from '../../../service/AuthService';
 import AppConfig from '../../../layout/AppConfig.vue';
 
 const router = useRouter();
 const route = useRoute();
-const { layoutConfig } = useLayout();
+const { layoutConfig, logoUrl } = useLayout();
 
 const username = ref('');
 const password = ref('');
 const checked = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
-
-const logoUrl = computed(() => {
-    return `layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
-});
 
 const handleLogin = async () => {
     errorMessage.value = '';
@@ -49,12 +45,10 @@ const handleLogin = async () => {
             <img :src="logoUrl" alt="Sakai logo" class="mb-5 w-6rem flex-shrink-0" />
             <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
                 <div class="w-full surface-card py-8 px-5 sm:px-8" style="border-radius: 53px">
-                    <div class="text-center mb-5">
-                        <img src="/demo/images/login/avatar.png" alt="Image" height="50" class="mb-3" />
-                        <div class="text-900 text-3xl font-medium mb-3">Welcome Back!</div>
-                        <span class="text-600 font-medium">Sign in to Invoice Management System</span>
-                    </div>
-
+<!--                    <div class="text-center mb-5">-->
+<!--                        <img src="/demo/images/login/avatar.png" alt="Image" height="50" class="mb-3" />-->
+<!--                        <div class="text-900 text-3xl font-medium mb-3">Welcome Back!</div>-->
+<!--                    </div>-->
                     <div v-if="errorMessage" class="p-message p-message-error mb-4">
                         <div class="p-message-wrapper p-3 text-red-600 font-medium">
                             <i class="pi pi-exclamation-circle mr-2"></i>

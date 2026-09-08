@@ -7,7 +7,11 @@ import { getPluginMenus } from '../plugins/pluginLoader';
 const defaultHomeMenu = {
     label: 'Home',
     items: [
-
+        {
+          label: 'Dashboard',
+          icon: 'pi pi-fw pi-home',
+          to: '/'
+        }
     ]
 };
 
@@ -40,7 +44,7 @@ const model = computed(() => {
         ];
     }
     return [
-        // defaultHomeMenu,
+        defaultHomeMenu,
         ...pluginMenus,
         adminMenu
     ];

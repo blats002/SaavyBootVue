@@ -100,6 +100,9 @@ bootRun {
     args = ['--spring.profiles.active=development']
     mainClass = 'org.saavy.SpringBootVueApplication'
     systemProperty 'liquibase.duplicateFileMode', 'WARN'
+    def springBootTempDir = file("${rootProject.projectDir}/.tmp/spring-boot")
+    springBootTempDir.mkdirs()
+    systemProperty 'java.io.tmpdir', springBootTempDir.absolutePath
 }
 
 tasks.register('bootRunDebug', JavaExec) {
@@ -110,6 +113,11 @@ tasks.register('bootRunDebug', JavaExec) {
     mainClass = 'org.saavy.SpringBootVueApplication'
     classpath = sourceSets.main.runtimeClasspath
     systemProperty 'liquibase.duplicateFileMode', 'WARN'
+
+    def springBootTempDir = file("${rootProject.projectDir}/.tmp/spring-boot")
+    springBootTempDir.mkdirs()
+
+    systemProperty 'java.io.tmpdir', springBootTempDir.absolutePath
 
     args = ['--spring.profiles.active=development']
     jvmArgs = [
