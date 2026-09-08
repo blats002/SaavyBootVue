@@ -24,13 +24,9 @@ public class UiFieldMetadataService {
     @Autowired
     public UiFieldMetadataService(@Autowired(required = false) List<EntityRegistryProvider> providers) {
         // 1. Register core built-in entities
-        entityRegistry.put("supplier", SupplierDTO.class);
-        entityRegistry.put("product", ProductDTO.class);
-        entityRegistry.put("stock", StockDTO.class);
         entityRegistry.put("users", UserDTO.class);
-        entityRegistry.put("user", UserDTO.class);
         entityRegistry.put("roles", RoleDTO.class);
-        entityRegistry.put("role", RoleDTO.class);
+        entityRegistry.put("userrole", UserRoleDTO.class);
 
         // 2. Automatically register all downstream domain entities provided by Spring components
         if (providers != null) {
@@ -76,7 +72,8 @@ public class UiFieldMetadataService {
                 detail.parentField(),
                 detail.parentValue(),
                 detail.messages(),
-                detail.detailEndpoint()
+                detail.detailEndpoint(),
+                detail.deleteWithPayload()
         );
     }
 

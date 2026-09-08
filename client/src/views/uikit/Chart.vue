@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { useLayout } from '@/layout/composables/layout';
+import { useLayout } from '../../layout/composables/layout';
 
 const { layoutConfig } = useLayout();
 let documentStyle = getComputedStyle(document.documentElement);

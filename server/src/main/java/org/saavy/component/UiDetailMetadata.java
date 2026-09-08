@@ -7,6 +7,7 @@ public record UiDetailMetadata(
         String parentField,
         String parentValueJSON,
         String messagesJSON,
-        String detailEndpoint
+        String detailEndpoint,
+        boolean deleteWithPayload
 ) {
 }

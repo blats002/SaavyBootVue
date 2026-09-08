@@ -1,0 +1,25 @@
+apply plugin: 'com.github.node-gradle.node'
+
+node {
+    version = '22.12.0'
+    npmVersion = '8.19.4'
+    download = true
+}
+
+tasks.register('serve', com.github.gradle.node.npm.task.NpmTask) {
+    group = 'application'
+    description = 'Run the client app'
+    args = ['run', 'dev']
+}
+
+tasks.register('build', com.github.gradle.node.npm.task.NpmTask) {
+    group = 'build'
+    description = 'Build the client bundle'
+    args = ['run', 'build']
+}
+
+tasks.register('lint', com.github.gradle.node.npm.task.NpmTask) {
+    group = 'build'
+    description = 'Run eslint'
+    args = ['run', 'lint']
+}

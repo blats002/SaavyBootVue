@@ -6,7 +6,7 @@ import GenericPanel from './GenericPanel.vue';
 import TabView from 'primevue/tabview';
 import Dialog from 'primevue/dialog';
 import GroupLayout from './GroupLayout.vue';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 /**
  * GenericMasterDetail Component
@@ -154,9 +154,9 @@ const getDetailService = (detail) => {
 
             return recordWithParent;
         },
-        delete: async (id) => {
+        delete: async (idOrPayload) => {
             if (detail.service?.delete) {
-                return detail.service.delete(id, selectedMasterRecord.value);
+                return detail.service.delete(idOrPayload, selectedMasterRecord.value);
             }
 
             return null;
@@ -285,6 +285,7 @@ const getMasterTitle = (master) => {
                                 :service="getDetailService(detail)"
                                 :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
                                 :messages="detail.messages"
+                                :deleteWithPayload="detail.deleteWithPayload"
                             />
                         </TabPanel>
                     </TabView>
@@ -323,6 +324,7 @@ const getMasterTitle = (master) => {
                                 :service="getDetailService(detail)"
                                 :createEmptyRecord="getDetailCreateEmptyRecord(detail)"
                                 :messages="detail.messages"
+                                :deleteWithPayload="detail.deleteWithPayload"
                             />
                         </TabPanel>
                     </TabView>

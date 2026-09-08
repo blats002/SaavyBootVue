@@ -1,24 +1,24 @@
 package org.saavy.controllers;
 
-import org.saavy.entity.Stock;
-import org.saavy.entity.StockDTO;
+import org.saavy.entity.SampleItem;
+import org.saavy.entity.SampleItemDTO;
 import org.saavy.services.JPAService;
-import org.saavy.services.StockService;
+import org.saavy.services.SampleItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/stock")
+@RequestMapping("/api/sample-items")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'USER')")
-public class StockController extends BaseController<Stock, StockDTO, Long> {
+public class SampleItemController extends BaseController<SampleItem, SampleItemDTO, Long> {
 
     @Autowired
-    private StockService stockService;
+    private SampleItemService sampleItemService;
 
     @Override
-    protected JPAService<Stock, StockDTO, Long> getService() {
-        return stockService;
+    protected JPAService<SampleItem, SampleItemDTO, Long> getService() {
+        return sampleItemService;
     }
 }

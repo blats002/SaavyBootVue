@@ -1,6 +1,6 @@
 <script setup>
-import GenericCrud from '@/components/GenericCrud.vue';
-import supplierService, { createEmptySupplier } from '@/service/JPASupplierService';
+import GenericCrud from '../../components/GenericCrud.vue';
+import supplierService, { createEmptySupplier } from '../../service/JPASupplierService';
 import { onMounted, ref } from 'vue';
 
 const fields = ref([]);

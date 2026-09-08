@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed } from 'vue';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 const props = defineProps({
     header: {

@@ -15,5 +15,6 @@ public @interface UiDetail {
     String parentValue() default "{\"id\":\"id\", \"name\":\"name\"}";
     String messages()  default "";
     String detailEndpoint()  default "";
+    boolean deleteWithPayload() default false;
 }
 

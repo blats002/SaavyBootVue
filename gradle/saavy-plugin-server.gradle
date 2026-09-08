@@ -1,0 +1,87 @@
+apply plugin: 'java'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'org.saavy.plugins'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:3.5.14'
+    }
+}
+
+dependencies {
+    // Spring Boot Starters & JPA
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.springframework.boot:spring-boot-starter-security'
+    compileOnly 'org.modelmapper:modelmapper:3.1.1'
+    compileOnly 'org.apache.commons:commons-lang3:3.18.0'
+
+    // Lombok annotations & processor
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Reference the host core server module
+    compileOnly project(':server')
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation project(':server')
+}
+
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// ============================================================================
+// Plugin Liquibase Diff Changelog Generation Task
+// ============================================================================
+def pluginChangelogDir = "${projectDir}/src/main/resources/db/changelog/plugins"
+def pluginDiffFile = "${pluginChangelogDir}/${project.name}-diff-changelog.xml"
+
+tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
+    group = 'liquibase'
+    description = "Generates a Liquibase diff changelog for ${project.name} JPA entities"
+
+    dependsOn classes
+    dependsOn ':server:classes'
+
+    classpath = project(':server').configurations.liquibaseRuntime + 
+                project(':server').sourceSets.main.runtimeClasspath + 
+                sourceSets.main.runtimeClasspath
+
+    mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
+
+    doFirst {
+        file(pluginChangelogDir).mkdirs()
+    }
+
+    def liquibaseUrl = project.hasProperty('databaseUrl') ? databaseUrl : (project(':server').hasProperty('databaseUrl') ? project(':server').databaseUrl : '')
+    def liquibaseUsername = project.hasProperty('databaseUserName') ? databaseUserName : (project(':server').hasProperty('databaseUserName') ? project(':server').databaseUserName : '')
+    def liquibasePassword = project.hasProperty('databasePassword') ? databasePassword : (project(':server').hasProperty('databasePassword') ? project(':server').databasePassword : '')
+    def liquibaseDriver = project.hasProperty('databaseDriver') ? databaseDriver : (project(':server').hasProperty('databaseDriver') ? project(':server').databaseDriver : '')
+    def liquibaseDialect = project.hasProperty('databaseDialect') ? databaseDialect : (project(':server').hasProperty('databaseDialect') ? project(':server').databaseDialect : '')
+
+    args(
+        "--log-level=debug",
+        "--search-path=${projectDir},${projectDir}/src/main/resources,${project(':server').projectDir}/src/main/resources",
+        "--changeLogFile=${pluginDiffFile}",
+        "--url=${liquibaseUrl}",
+        "--username=${liquibaseUsername}",
+        "--password=${liquibasePassword}",
+        "--driver=${liquibaseDriver}",
+        "--referenceUrl=hibernate:spring:org.saavy?dialect=${liquibaseDialect}",
+        'diffChangeLog'
+    )
+}

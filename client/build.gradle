@@ -1,18 +1,10 @@
-plugins {
-    id "com.github.node-gradle.node" version "3.5.1"
-}
+apply plugin: 'com.github.node-gradle.node'
 
 node {
-    version = '22.12.0' // https://nodejs.org/en/
-    //yarnVersion = '1.13.0' // https://yarnpkg.com/en/
+    version = '22.12.0'
     npmVersion = '8.19.4'
     download = true
 }
-
-//task bootRun(dependsOn: 'serve') {
-//    group = 'application'
-//    description = 'Run the client app (for use with gradle bootRun -parallel'
-//}
 
 tasks.register('serve', NpmTask) {
     group = 'application'
@@ -25,6 +17,7 @@ tasks.register('build', NpmTask) {
     description = 'Build the client bundle'
     args = ['run', 'build']
 }
+
 tasks.register('lint', NpmTask) {
     group = 'build'
     description = 'Run eslint'
@@ -33,6 +26,6 @@ tasks.register('lint', NpmTask) {
 
 tasks.register('audit', NpmTask) {
     group = 'build'
-    description = 'Run eslint'
+    description = 'Run npm audit'
     args = ['audit', 'fix', '--force']
 }

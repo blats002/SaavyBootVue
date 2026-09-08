@@ -6,7 +6,7 @@ import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 import Image from 'primevue/image';
 import { debounce } from 'lodash';
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
 const props = defineProps({
     title: {
@@ -73,6 +73,10 @@ const props = defineProps({
     detailButtonClass: {
         type: String,
         default: 'p-button-rounded p-button-info mr-2'
+    },
+    deleteWithPayload: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -425,7 +429,11 @@ const confirmDeleteRecord = (selectedRecord) => {
 
 const deleteRecord = async () => {
     try {
-        await props.service.delete(record.value[props.dataKey]);
+        if (props.deleteWithPayload) {
+            await props.service.delete(record.value);
+        } else {
+            await props.service.delete(record.value[props.dataKey]);
+        }
 
         const deletedRecord = record.value;
 
@@ -491,7 +499,11 @@ const deleteSelectedRecords = async () => {
     }
 
     try {
-        await Promise.all(selectedRecords.value.map((item) => props.service.delete(item[props.dataKey])));
+        if (props.deleteWithPayload) {
+            await Promise.all(selectedRecords.value.map((item) => props.service.delete(item)));
+        } else {
+            await Promise.all(selectedRecords.value.map((item) => props.service.delete(item[props.dataKey])));
+        }
 
         const selectedIds = selectedRecords.value.map((item) => item[props.dataKey]);
         records.value = records.value.filter((item) => !selectedIds.includes(item[props.dataKey]));

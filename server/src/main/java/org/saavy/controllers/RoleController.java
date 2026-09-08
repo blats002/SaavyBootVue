@@ -2,6 +2,7 @@ package org.saavy.controllers;
 
 import org.saavy.entity.Role;
 import org.saavy.entity.RoleDTO;
+import org.saavy.entity.UserRoleDTO;
 import org.saavy.services.JPAService;
 import org.saavy.services.RoleService;
 import org.saavy.services.UserService;
@@ -28,18 +29,18 @@ public class RoleController extends BaseController<Role, RoleDTO, Long> {
         return roleService;
     }
 
-    @GetMapping("/by-user/{userId}")
-    public List<RoleDTO> getRolesByUserId(@PathVariable Long userId) {
-        return userService.getRolesByUserId(userId);
+    @GetMapping({"/by-user/{userId}", "/by-users/{userId}"})
+    public List<UserRoleDTO> getRolesByUserId(@PathVariable Long userId) {
+        return userService.getUserRolesByUserId(userId);
     }
 
-    @GetMapping("/by-user/{userId}/page")
-    public Page<RoleDTO> getRolesByUserIdWithPage(
+    @GetMapping({"/by-user/{userId}/page", "/by-users/{userId}/page"})
+    public Page<UserRoleDTO> getRolesByUserIdWithPage(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int rows,
             @RequestParam(defaultValue = "") String search
     ) {
-        return userService.getRolesByUserIdWithPage(userId, page, rows, search);
+        return userService.getUserRolesByUserIdWithPage(userId, page, rows, search);
     }
 }

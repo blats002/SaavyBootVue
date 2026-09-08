@@ -6,8 +6,8 @@ import Panel from 'primevue/panel';
 import Accordion from 'primevue/accordion';
 import TabView from 'primevue/tabview';
 import TabPanel from "primevue/tabpanel";
-import GenericCrud from "@/components/GenericCrud.vue";
-import AuthService from '@/service/AuthService';
+import GenericCrud from "./GenericCrud.vue";
+import AuthService from '../service/AuthService';
 
 /*
      * GenericPanel bodyType usage:

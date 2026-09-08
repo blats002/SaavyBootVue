@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useLayout } from '@/layout/composables/layout';
+import { useLayout } from './composables/layout';
 import { useRouter } from 'vue-router';
 
-import AuthService from '@/service/AuthService';
+import AuthService from '../service/AuthService';
 
-const { layoutConfig, onMenuToggle } = useLayout();
+const { layoutConfig, onMenuToggle, logoUrl } = useLayout();
 
 const outsideClickListener = ref(null);
 const topbarMenuActive = ref(false);
@@ -23,10 +23,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     unbindOutsideClickListener();
-});
-
-const logoUrl = computed(() => {
-    return `layout/images/${layoutConfig.darkTheme.value ? 'logo-white' : 'logo-dark'}.svg`;
 });
 
 const onTopBarMenuButton = () => {
@@ -84,18 +80,18 @@ const isOutsideClicked = (event) => {
         </button>
 
         <div class="layout-topbar-menu" :class="topbarMenuClasses">
-            <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">
-                <i class="pi pi-calendar"></i>
-                <span>Calendar</span>
-            </button>
-            <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">
-                <i class="pi pi-user"></i>
-                <span>Profile</span>
-            </button>
-            <button @click="onSettingsClick()" class="p-link layout-topbar-button">
-                <i class="pi pi-cog"></i>
-                <span>Settings</span>
-            </button>
+<!--            <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">-->
+<!--                <i class="pi pi-calendar"></i>-->
+<!--                <span>Calendar</span>-->
+<!--            </button>-->
+<!--            <button @click="onTopBarMenuButton()" class="p-link layout-topbar-button">-->
+<!--                <i class="pi pi-user"></i>-->
+<!--                <span>Profile</span>-->
+<!--            </button>-->
+<!--            <button @click="onSettingsClick()" class="p-link layout-topbar-button">-->
+<!--                <i class="pi pi-cog"></i>-->
+<!--                <span>Settings</span>-->
+<!--            </button>-->
             <button @click="onLogout()" class="p-link layout-topbar-button" title="Sign Out">
                 <i class="pi pi-sign-out"></i>
                 <span>Sign Out</span>

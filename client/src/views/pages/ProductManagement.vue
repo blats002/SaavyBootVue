@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, onBeforeMount, watch } from 'vue';
-import productService from '@/service/JPAProductService';
-import { createEmptyProduct } from '@/service/JPAProductService';
+import productService from '../../service/JPAProductService';
+import { createEmptyProduct } from '../../service/JPAProductService';
 
 const master = ref({});
 const details = ref([]);
