@@ -88,10 +88,17 @@ tasks.register('frontendHotDeploy', Copy) {
 }
 
 processResources {
-    if (!gradle.startParameter.taskNames.contains("bootRunDebug")
-            && !gradle.startParameter.taskNames.contains(":server:bootRunDebug")
-            && !gradle.startParameter.taskNames.contains("liquibaseJpaDiffChangeLog")
-            && !gradle.startParameter.taskNames.contains(":server:liquibaseJpaDiffChangeLog")) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    def pluginChangelogSrc = file("${rootProject.projectDir}/plugins/db/changelog")
+    if (pluginChangelogSrc.exists()) {
+        from(pluginChangelogSrc) {
+            into 'db/changelog/plugins'
+        }
+    }
+    def isDiffOrDebug = gradle.startParameter.taskNames.any { 
+        it.contains("Diff") || it.contains("diff") || it.contains("bootRunDebug") || it.contains("liquibase")
+    }
+    if (!isDiffOrDebug) {
         dependsOn copyFrontend
     }
 }
@@ -148,9 +155,90 @@ def liquibasePassword = project.hasProperty('databasePassword') ? databasePasswo
 def liquibaseDriver = project.hasProperty('databaseDriver') ? databaseDriver : ''
 def liquibaseReferenceUrl = "hibernate:spring:org.saavy?dialect=${project.hasProperty('databaseDialect') ? databaseDialect : ''}"
 
+def getServerEntityTableNames = {
+    def tableNames = [] as Set
+    try {
+        sourceSets.main.java.srcDirs.each { srcDir ->
+            if (srcDir.exists()) {
+                srcDir.eachFileRecurse { file ->
+                    if (file.name.endsWith('.java')) {
+                        def text = file.text
+                        if (text =~ /@Entity\b/) {
+                            def tableMatcher = text =~ /@Table\s*\([^)]*name\s*=\s*"([^"]+)"/
+                            if (tableMatcher.find()) {
+                                tableNames.add(tableMatcher.group(1).trim())
+                            } else {
+                                def classMatcher = text =~ /(?:public\s+)?class\s+(\w+)/
+                                if (classMatcher.find()) {
+                                    tableNames.add(classMatcher.group(1).trim())
+                                }
+                            }
+                            def joinMatcher = text =~ /@JoinTable\s*\([^)]*name\s*=\s*"([^"]+)"/
+                            while (joinMatcher.find()) {
+                                tableNames.add(joinMatcher.group(1).trim())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (Throwable ignored) {}
+
+    // Fallback default core server tables
+    if (tableNames.isEmpty()) {
+        tableNames.addAll(['users', 'roles', 'user_roles', 'plugin_config'])
+    }
+    return tableNames
+}
+
+def getAllPluginTableNames = {
+    def pluginTables = [] as Set
+    // 1. Scan plugin changelogs for any created tables
+    def pluginChangelogDir = file("${rootProject.projectDir}/plugins/db/changelog")
+    if (pluginChangelogDir.exists()) {
+        pluginChangelogDir.eachFileRecurse { f ->
+            if (f.name.endsWith('.xml')) {
+                try {
+                    def m = f.text =~ /<createTable\s+[^>]*tableName="([^"]+)"/
+                    while (m.find()) {
+                        pluginTables.add(m.group(1).trim().toLowerCase())
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+    }
+    // 2. Scan plugin Java entities across all plugins
+    def pluginsDir = file("${rootProject.projectDir}/plugins")
+    if (pluginsDir.exists()) {
+        pluginsDir.eachFileRecurse { f ->
+            if (f.name.endsWith('.java')) {
+                try {
+                    def text = f.text
+                    if (text =~ /@Entity\b/) {
+                        def tableMatcher = text =~ /@Table\s*\([^)]*name\s*=\s*"([^"]+)"/
+                        if (tableMatcher.find()) {
+                            pluginTables.add(tableMatcher.group(1).trim().toLowerCase())
+                        } else {
+                            def classMatcher = text =~ /(?:public\s+)?class\s+(\w+)/
+                            if (classMatcher.find()) {
+                                pluginTables.add(classMatcher.group(1).trim().toLowerCase())
+                            }
+                        }
+                        def joinMatcher = text =~ /@JoinTable\s*\([^)]*name\s*=\s*"([^"]+)"/
+                        while (joinMatcher.find()) {
+                            pluginTables.add(joinMatcher.group(1).trim().toLowerCase())
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+    }
+    return pluginTables
+}
+
 tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
     group = 'liquibase'
-    description = 'Generates a Liquibase changelog from the current database'
+    description = 'Generates a Liquibase changelog from the current database for server entities'
 
     dependsOn classes
 
@@ -158,7 +246,13 @@ tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
 
     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
 
-    args(
+    doFirst {
+        def serverTables = getServerEntityTableNames()
+        def pluginTables = getAllPluginTableNames()
+        logger.lifecycle(">>> [Liquibase] Server core entity tables detected: ${serverTables}")
+        logger.lifecycle(">>> [Liquibase] Plugin tables to exclude from server diff: ${pluginTables}")
+
+        def cmdArgs = [
             "--log-level=debug",
             "--search-path=${liquibaseSearchPath}",
             "--changeLogFile=${liquibaseDiffChangeLogFile}",
@@ -166,7 +260,57 @@ tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
             "--username=${liquibaseUsername}",
             "--password=${liquibasePassword}",
             "--driver=${liquibaseDriver}",
-            "--referenceUrl=${liquibaseReferenceUrl}",
-            'diffChangeLog'
-    )
+            "--referenceUrl=${liquibaseReferenceUrl}"
+        ]
+
+        // Exclude Liquibase metadata tables and all active/historic plugin tables
+        def excluded = ['databasechangelog', 'databasechangeloglock'] as Set
+        excluded.addAll(pluginTables)
+        cmdArgs.add("--excludeObjects=" + excluded.join(','))
+
+        cmdArgs.add('diffChangeLog')
+        setArgs(cmdArgs)
+    }
+
+    doLast {
+        def diffFile = file(liquibaseDiffChangeLogFile)
+        if (diffFile.exists()) {
+            def content = diffFile.text
+            def pluginTables = getAllPluginTableNames().collect { it.toLowerCase() }
+
+            // 1. Safeguard: Remove any changeSet that operates on plugin tables
+            def cleanedContent = content.replaceAll(/(?s)\s*<changeSet[^>]*>.*?<\/changeSet>/) { fullMatch ->
+                def tableMatcher = fullMatch =~ /(?:tableName|baseTableName)="([^"]+)"/
+                def referencedTables = []
+                while (tableMatcher.find()) {
+                    referencedTables << tableMatcher.group(1).toLowerCase()
+                }
+                if (!referencedTables.isEmpty() && referencedTables.any { pluginTables.contains(it) }) {
+                    logger.lifecycle("Removed plugin-specific changeSet referencing table(s) ${referencedTables} from server diff changelog.")
+                    return ""
+                }
+                return fullMatch
+            }
+
+            // 2. Add safe preConditions to dropTable changesets if missing
+            cleanedContent = cleanedContent.replaceAll(/(?s)<changeSet\s+([^>]*)>(.*?)<\/changeSet>/) { fullChangeSet, attrs, inner ->
+                if (!inner.contains('<preConditions') && inner.contains('<dropTable')) {
+                    def tableMatcher = inner =~ /<dropTable\s+tableName="([^"]+)"/
+                    if (tableMatcher.find()) {
+                        def tbl = tableMatcher.group(1)
+                        return "<changeSet ${attrs}>\n        <preConditions onFail=\"MARK_RAN\">\n            <tableExists tableName=\"${tbl}\"/>\n        </preConditions>${inner}</changeSet>"
+                    }
+                }
+                return fullChangeSet
+            }
+
+            diffFile.text = cleanedContent
+
+            def hasDrops = cleanedContent =~ /<dropTable\b|<dropForeignKeyConstraint\b|<dropColumn\b/
+            if (hasDrops.find()) {
+                logger.lifecycle(">>> [Liquibase] Drop changesets generated in ${liquibaseDiffChangeLogFile}")
+                logger.lifecycle(">>> [Liquibase] NOTE: You can review and keep them in ${liquibaseDiffChangeLogFile} or move them into 'src/main/resources/db/changelog/drops/' for modular drop lifecycle management.")
+            }
+        }
+    }
 }

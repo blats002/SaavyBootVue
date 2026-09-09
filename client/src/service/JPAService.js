@@ -58,12 +58,12 @@ const createJpaService = (apiEndpointName) => ({
             const jpaService = createJpaService(meta.masterEndPoint);
             meta.service = jpaService;
             meta.fields = await jpaService.getFieldsMeta();
-            meta.messages = JSON.parse(meta.messagesJSON);
+            meta.messages = meta.messagesJSON ? JSON.parse(meta.messagesJSON) : {};
+            meta.deletable = res.data.deletable !== false;
+            meta.deletableField = res.data.deletableField || '';
 
-            // meta.createEmptyRecord  = () => (createEmptyRecord(meta.fields));
-
-            console.log(meta);
             return meta;
+
         });
     },
     getDetailMeta: async () => {
@@ -89,19 +89,38 @@ const createJpaService = (apiEndpointName) => ({
             return details;
         });
     },
-    getFieldsMeta: async () => {
+    getFieldsMeta: async (depth = 0) => {
         return await axios.get(`${SERVER_URL}/api/metadata/${apiEndpointName}/fields`).then(async (res) => {
-            const fields = res.data;
+            const fields = res.data || [];
             for (const field of fields) {
                 if (field.type === 'manyToOne' && field.optionsEndpoint) {
                     const jpaService = createJpaService(field.optionsEndpoint);
                     field.optionsService = jpaService;
-                    field.optionsFields = await axios.get(`${SERVER_URL}/api/metadata/${field.optionsEndpoint}/fields`).then(async (res) => {
-                        return res.data;
-                    });
+                    if (depth < 2) {
+                        field.optionsFields = await jpaService.getFieldsMeta(depth + 1);
+                    } else {
+                        field.optionsFields = await axios.get(`${SERVER_URL}/api/metadata/${field.optionsEndpoint}/fields`).then((subRes) => {
+                            const subFields = subRes.data || [];
+                            subFields.forEach((sf) => {
+                                if (sf.type === 'enum' && sf.enumOptionsJSON) {
+                                    try {
+                                        sf.options = JSON.parse(sf.enumOptionsJSON);
+                                    } catch (e) {
+                                        sf.options = [];
+                                    }
+                                }
+                            });
+                            return subFields;
+                        });
+                    }
                 } else if (field.type === 'enum') {
-                    const json = JSON.parse(field.enumOptionsJSON);
-                    field.options = json;
+                    if (field.enumOptionsJSON) {
+                        try {
+                            field.options = JSON.parse(field.enumOptionsJSON);
+                        } catch (e) {
+                            field.options = [];
+                        }
+                    }
                 }
             }
             console.log(fields);

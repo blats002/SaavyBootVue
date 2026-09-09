@@ -1,0 +1,907 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <!-- Rich Plausible Seed Data: Parties & Invoices (Jan to Aug 2026) -->
+    <changeSet author="saavy" id="invoice-seed-parties-and-invoices-2026">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="parties"/>
+                <tableExists tableName="invoices"/>
+            </and>
+        </preConditions>
+        <delete tableName="payments"/>
+        <delete tableName="invoice_files"/>
+        <delete tableName="invoices"/>
+        <delete tableName="parties"/>
+
+        <!-- ========================================================= -->
+        <!-- PARTIES (Customers & Vendors)                             -->
+        <!-- ========================================================= -->
+        <!-- Customers (1-10) -->
+        <insert tableName="parties">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="Acme Corporation"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="billing@acme-corp.com"/>
+            <column name="phone" value="+1 (555) 012-3456"/>
+            <column name="tax_id" value="US-123456789"/>
+            <column name="address" value="100 Enterprise Blvd, Suite 400"/>
+            <column name="city" value="Austin"/>
+            <column name="state" value="TX"/>
+            <column name="postal_code" value="78701"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Enterprise client - Net 30 terms"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="2"/>
+            <column name="name" value="Globex Industries"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="ap@globex.io"/>
+            <column name="phone" value="+1 (555) 234-5678"/>
+            <column name="tax_id" value="US-987654321"/>
+            <column name="address" value="742 Evergreen Terrace"/>
+            <column name="city" value="Springfield"/>
+            <column name="state" value="IL"/>
+            <column name="postal_code" value="62704"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Key account for manufacturing supplies"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="3"/>
+            <column name="name" value="Wayne Enterprises"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="invoices@wayne-ent.com"/>
+            <column name="phone" value="+1 (555) 345-6789"/>
+            <column name="tax_id" value="US-456789012"/>
+            <column name="address" value="1007 Mountain Drive"/>
+            <column name="city" value="Gotham"/>
+            <column name="state" value="NJ"/>
+            <column name="postal_code" value="07001"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Technology &amp; Defense consulting"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="4"/>
+            <column name="name" value="Stark Logistics"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="finance@starklogistics.com"/>
+            <column name="phone" value="+1 (555) 456-7890"/>
+            <column name="tax_id" value="US-567890123"/>
+            <column name="address" value="200 Park Avenue"/>
+            <column name="city" value="New York"/>
+            <column name="state" value="NY"/>
+            <column name="postal_code" value="10166"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Global logistics and air freight client"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="5"/>
+            <column name="name" value="Initech Software"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="accounts@initech.com"/>
+            <column name="phone" value="+1 (555) 567-8901"/>
+            <column name="tax_id" value="US-678901234"/>
+            <column name="address" value="4120 Freidrich Lane"/>
+            <column name="city" value="Austin"/>
+            <column name="state" value="TX"/>
+            <column name="postal_code" value="78744"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="SaaS integration partner"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="6"/>
+            <column name="name" value="Cyberdyne Systems"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="payables@cyberdyne.ai"/>
+            <column name="phone" value="+1 (555) 678-9012"/>
+            <column name="tax_id" value="US-789012345"/>
+            <column name="address" value="18144 El Camino Real"/>
+            <column name="city" value="Sunnyvale"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94086"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Robotics and neural network research"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="7"/>
+            <column name="name" value="Umbrella Medical Tech"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="procurement@umbrella-med.com"/>
+            <column name="phone" value="+1 (555) 789-0123"/>
+            <column name="tax_id" value="US-890123456"/>
+            <column name="address" value="500 Raccoon Way"/>
+            <column name="city" value="Denver"/>
+            <column name="state" value="CO"/>
+            <column name="postal_code" value="80202"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Biomedical equipment and software solutions"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="8"/>
+            <column name="name" value="Soylent Foods Corp"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="billing@soylent-foods.com"/>
+            <column name="phone" value="+1 (555) 890-1234"/>
+            <column name="tax_id" value="US-901234567"/>
+            <column name="address" value="88 Market Street"/>
+            <column name="city" value="San Francisco"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94105"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Nutrition and agri-tech client"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="9"/>
+            <column name="name" value="Massive Dynamic Inc"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="treasury@massivedynamic.com"/>
+            <column name="phone" value="+1 (555) 901-2345"/>
+            <column name="tax_id" value="US-012345678"/>
+            <column name="address" value="650 Fifth Avenue"/>
+            <column name="city" value="New York"/>
+            <column name="state" value="NY"/>
+            <column name="postal_code" value="10019"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="R&amp;D multidisciplinary services"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="10"/>
+            <column name="name" value="Hooli Cloud Services"/>
+            <column name="party_type" value="CUSTOMER"/>
+            <column name="email" value="billing@hooli.com"/>
+            <column name="phone" value="+1 (555) 012-7890"/>
+            <column name="tax_id" value="US-123450987"/>
+            <column name="address" value="1065 La Avenida St"/>
+            <column name="city" value="Mountain View"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94043"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Cloud storage and compression"/>
+        </insert>
+
+        <!-- Vendors (11-17) -->
+        <insert tableName="parties">
+            <column name="id" valueNumeric="11"/>
+            <column name="name" value="Amazon Web Services"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="aws-receivables@amazon.com"/>
+            <column name="phone" value="+1 (800) 555-0100"/>
+            <column name="tax_id" value="US-411234567"/>
+            <column name="address" value="410 Terry Ave N"/>
+            <column name="city" value="Seattle"/>
+            <column name="state" value="WA"/>
+            <column name="postal_code" value="98109"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Cloud hosting and infrastructure"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="12"/>
+            <column name="name" value="Office Depot Supplies"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="billing@officedepot.com"/>
+            <column name="phone" value="+1 (800) 555-0200"/>
+            <column name="tax_id" value="US-591234567"/>
+            <column name="address" value="6600 N Military Trail"/>
+            <column name="city" value="Boca Raton"/>
+            <column name="state" value="FL"/>
+            <column name="postal_code" value="33496"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Office supplies and hardware"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="13"/>
+            <column name="name" value="Google Cloud Platform"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="cloud-billing@google.com"/>
+            <column name="phone" value="+1 (800) 555-0300"/>
+            <column name="tax_id" value="US-771234567"/>
+            <column name="address" value="1600 Amphitheatre Pkwy"/>
+            <column name="city" value="Mountain View"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94043"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Google Workspace and BigQuery services"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="14"/>
+            <column name="name" value="Slack Technologies"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="billing@slack.com"/>
+            <column name="phone" value="+1 (800) 555-0400"/>
+            <column name="tax_id" value="US-941234567"/>
+            <column name="address" value="500 Howard St"/>
+            <column name="city" value="San Francisco"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94105"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Team communication and messaging licenses"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="15"/>
+            <column name="name" value="Datadog Monitoring"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="invoices@datadoghq.com"/>
+            <column name="phone" value="+1 (800) 555-0500"/>
+            <column name="tax_id" value="US-131234567"/>
+            <column name="address" value="620 8th Ave, 45th Floor"/>
+            <column name="city" value="New York"/>
+            <column name="state" value="NY"/>
+            <column name="postal_code" value="10018"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="APM and log management telemetry"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="16"/>
+            <column name="name" value="Twilio Communications"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="billing@twilio.com"/>
+            <column name="phone" value="+1 (800) 555-0600"/>
+            <column name="tax_id" value="US-261234567"/>
+            <column name="address" value="101 Spear St, 1st Floor"/>
+            <column name="city" value="San Francisco"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94105"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="SMS and telephony gateway API"/>
+        </insert>
+
+        <insert tableName="parties">
+            <column name="id" valueNumeric="17"/>
+            <column name="name" value="Atlassian Services"/>
+            <column name="party_type" value="VENDOR"/>
+            <column name="email" value="accounts@atlassian.com"/>
+            <column name="phone" value="+1 (800) 555-0700"/>
+            <column name="tax_id" value="US-381234567"/>
+            <column name="address" value="303 Vintage Park Dr"/>
+            <column name="city" value="Foster City"/>
+            <column name="state" value="CA"/>
+            <column name="postal_code" value="94404"/>
+            <column name="country" value="United States"/>
+            <column name="notes" value="Jira and Confluence cloud licenses"/>
+        </insert>
+
+
+        <!-- ========================================================= -->
+        <!-- CUSTOMER INVOICES (Receivables)                           -->
+        <!-- ========================================================= -->
+
+        <!-- Jan 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="1"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-001"/>
+            <column name="party_id" valueNumeric="1"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-01-10"/>
+            <column name="due_date" value="2026-02-10"/>
+            <column name="total_amount" valueNumeric="12500.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="1"/>
+            <column name="invoice_id" valueNumeric="1"/>
+            <column name="amount" valueNumeric="12500.00"/>
+            <column name="payment_date" value="2026-01-28"/>
+            <column name="reference" value="ACH-ACME-8821"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="2"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-002"/>
+            <column name="party_id" valueNumeric="2"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-01-22"/>
+            <column name="due_date" value="2026-02-22"/>
+            <column name="total_amount" valueNumeric="8400.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="2"/>
+            <column name="invoice_id" valueNumeric="2"/>
+            <column name="amount" valueNumeric="8400.00"/>
+            <column name="payment_date" value="2026-02-15"/>
+            <column name="reference" value="WIRE-GBX-1044"/>
+        </insert>
+
+        <!-- Feb 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="3"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-003"/>
+            <column name="party_id" valueNumeric="3"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-02-05"/>
+            <column name="due_date" value="2026-03-05"/>
+            <column name="total_amount" valueNumeric="24000.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="3"/>
+            <column name="invoice_id" valueNumeric="3"/>
+            <column name="amount" valueNumeric="12000.00"/>
+            <column name="payment_date" value="2026-02-20"/>
+            <column name="reference" value="CHK-99214"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="4"/>
+            <column name="invoice_id" valueNumeric="3"/>
+            <column name="amount" valueNumeric="12000.00"/>
+            <column name="payment_date" value="2026-03-01"/>
+            <column name="reference" value="CHK-99302"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="4"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-004"/>
+            <column name="party_id" valueNumeric="4"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-02-18"/>
+            <column name="due_date" value="2026-03-18"/>
+            <column name="total_amount" valueNumeric="15800.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="5"/>
+            <column name="invoice_id" valueNumeric="4"/>
+            <column name="amount" valueNumeric="15800.00"/>
+            <column name="payment_date" value="2026-03-10"/>
+            <column name="reference" value="WIRE-STK-0021"/>
+        </insert>
+
+        <!-- Mar 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="5"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-005"/>
+            <column name="party_id" valueNumeric="5"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-03-08"/>
+            <column name="due_date" value="2026-04-08"/>
+            <column name="total_amount" valueNumeric="6200.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="6"/>
+            <column name="invoice_id" valueNumeric="5"/>
+            <column name="amount" valueNumeric="6200.00"/>
+            <column name="payment_date" value="2026-03-25"/>
+            <column name="reference" value="CC-INIT-4491"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="6"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-006"/>
+            <column name="party_id" valueNumeric="6"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-03-20"/>
+            <column name="due_date" value="2026-04-20"/>
+            <column name="total_amount" valueNumeric="18500.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="7"/>
+            <column name="invoice_id" valueNumeric="6"/>
+            <column name="amount" valueNumeric="18500.00"/>
+            <column name="payment_date" value="2026-04-12"/>
+            <column name="reference" value="ACH-CYB-7729"/>
+        </insert>
+
+        <!-- Apr 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="7"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-007"/>
+            <column name="party_id" valueNumeric="7"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-04-04"/>
+            <column name="due_date" value="2026-05-04"/>
+            <column name="total_amount" valueNumeric="22000.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="8"/>
+            <column name="invoice_id" valueNumeric="7"/>
+            <column name="amount" valueNumeric="22000.00"/>
+            <column name="payment_date" value="2026-04-30"/>
+            <column name="reference" value="WIRE-UMB-3011"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="8"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-008"/>
+            <column name="party_id" valueNumeric="8"/>
+            <column name="invoice_status" value="OVERPAID"/>
+            <column name="invoice_date" value="2026-04-19"/>
+            <column name="due_date" value="2026-05-19"/>
+            <column name="total_amount" valueNumeric="9300.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="9"/>
+            <column name="invoice_id" valueNumeric="8"/>
+            <column name="amount" valueNumeric="9500.00"/>
+            <column name="payment_date" value="2026-05-10"/>
+            <column name="reference" value="ACH-SOY-1102"/>
+        </insert>
+
+        <!-- May 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="9"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-009"/>
+            <column name="party_id" valueNumeric="9"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-05-11"/>
+            <column name="due_date" value="2026-06-11"/>
+            <column name="total_amount" valueNumeric="14200.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="10"/>
+            <column name="invoice_id" valueNumeric="9"/>
+            <column name="amount" valueNumeric="14200.00"/>
+            <column name="payment_date" value="2026-06-05"/>
+            <column name="reference" value="WIRE-MD-9041"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="10"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-010"/>
+            <column name="party_id" valueNumeric="10"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-05-25"/>
+            <column name="due_date" value="2026-06-25"/>
+            <column name="total_amount" valueNumeric="11600.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="11"/>
+            <column name="invoice_id" valueNumeric="10"/>
+            <column name="amount" valueNumeric="6000.00"/>
+            <column name="payment_date" value="2026-06-20"/>
+            <column name="reference" value="ACH-HOO-4410"/>
+        </insert>
+
+        <!-- Jun 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="11"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-011"/>
+            <column name="party_id" valueNumeric="1"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-06-03"/>
+            <column name="due_date" value="2026-07-03"/>
+            <column name="total_amount" valueNumeric="16500.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="12"/>
+            <column name="invoice_id" valueNumeric="11"/>
+            <column name="amount" valueNumeric="16500.00"/>
+            <column name="payment_date" value="2026-06-28"/>
+            <column name="reference" value="ACH-ACME-9012"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="12"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-012"/>
+            <column name="party_id" valueNumeric="4"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-06-17"/>
+            <column name="due_date" value="2026-07-17"/>
+            <column name="total_amount" valueNumeric="13400.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="13"/>
+            <column name="invoice_id" valueNumeric="12"/>
+            <column name="amount" valueNumeric="7000.00"/>
+            <column name="payment_date" value="2026-07-10"/>
+            <column name="reference" value="WIRE-STK-0099"/>
+        </insert>
+
+        <!-- Jul 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="13"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-013"/>
+            <column name="party_id" valueNumeric="3"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-07-08"/>
+            <column name="due_date" value="2026-08-08"/>
+            <column name="total_amount" valueNumeric="28500.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="14"/>
+            <column name="invoice_id" valueNumeric="13"/>
+            <column name="amount" valueNumeric="14000.00"/>
+            <column name="payment_date" value="2026-07-29"/>
+            <column name="reference" value="CHK-99881"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="14"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-014"/>
+            <column name="party_id" valueNumeric="5"/>
+            <column name="invoice_status" value="AWAITING_PAYMENT"/>
+            <column name="invoice_date" value="2026-07-22"/>
+            <column name="due_date" value="2026-08-22"/>
+            <column name="total_amount" valueNumeric="7800.00"/>
+        </insert>
+
+        <!-- Aug 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="15"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-015"/>
+            <column name="party_id" valueNumeric="2"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-08-05"/>
+            <column name="due_date" value="2026-09-05"/>
+            <column name="total_amount" valueNumeric="19200.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="15"/>
+            <column name="invoice_id" valueNumeric="15"/>
+            <column name="amount" valueNumeric="9600.00"/>
+            <column name="payment_date" value="2026-08-24"/>
+            <column name="reference" value="WIRE-GBX-2041"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="16"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-016"/>
+            <column name="party_id" valueNumeric="6"/>
+            <column name="invoice_status" value="AWAITING_PAYMENT"/>
+            <column name="invoice_date" value="2026-08-16"/>
+            <column name="due_date" value="2026-09-16"/>
+            <column name="total_amount" valueNumeric="17500.00"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="17"/>
+            <column name="DTYPE" value="CustomerInvoice"/>
+            <column name="invoice_number" value="INV-2026-017"/>
+            <column name="party_id" valueNumeric="9"/>
+            <column name="invoice_status" value="AWAITING_PAYMENT"/>
+            <column name="invoice_date" value="2026-08-25"/>
+            <column name="due_date" value="2026-09-25"/>
+            <column name="total_amount" valueNumeric="8900.00"/>
+        </insert>
+
+
+        <!-- ========================================================= -->
+        <!-- VENDOR INVOICES (Payables)                                -->
+        <!-- ========================================================= -->
+
+        <!-- Jan 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="18"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-101"/>
+            <column name="party_id" valueNumeric="11"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-01-05"/>
+            <column name="due_date" value="2026-02-05"/>
+            <column name="total_amount" valueNumeric="3850.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="16"/>
+            <column name="invoice_id" valueNumeric="18"/>
+            <column name="amount" valueNumeric="3850.00"/>
+            <column name="payment_date" value="2026-01-25"/>
+            <column name="reference" value="AUTO-AWS-JAN"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="19"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-102"/>
+            <column name="party_id" valueNumeric="12"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-01-18"/>
+            <column name="due_date" value="2026-02-18"/>
+            <column name="total_amount" valueNumeric="1420.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="17"/>
+            <column name="invoice_id" valueNumeric="19"/>
+            <column name="amount" valueNumeric="1420.00"/>
+            <column name="payment_date" value="2026-02-10"/>
+            <column name="reference" value="CORP-CARD-881"/>
+        </insert>
+
+        <!-- Feb 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="20"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-103"/>
+            <column name="party_id" valueNumeric="13"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-02-04"/>
+            <column name="due_date" value="2026-03-04"/>
+            <column name="total_amount" valueNumeric="4100.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="18"/>
+            <column name="invoice_id" valueNumeric="20"/>
+            <column name="amount" valueNumeric="4100.00"/>
+            <column name="payment_date" value="2026-02-28"/>
+            <column name="reference" value="AUTO-GCP-FEB"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="21"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-104"/>
+            <column name="party_id" valueNumeric="14"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-02-15"/>
+            <column name="due_date" value="2026-03-15"/>
+            <column name="total_amount" valueNumeric="1250.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="19"/>
+            <column name="invoice_id" valueNumeric="21"/>
+            <column name="amount" valueNumeric="1250.00"/>
+            <column name="payment_date" value="2026-03-01"/>
+            <column name="reference" value="ACH-SLACK-02"/>
+        </insert>
+
+        <!-- Mar 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="22"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-105"/>
+            <column name="party_id" valueNumeric="15"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-03-06"/>
+            <column name="due_date" value="2026-04-06"/>
+            <column name="total_amount" valueNumeric="2300.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="20"/>
+            <column name="invoice_id" valueNumeric="22"/>
+            <column name="amount" valueNumeric="2300.00"/>
+            <column name="payment_date" value="2026-03-29"/>
+            <column name="reference" value="AUTO-DD-MAR"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="23"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-106"/>
+            <column name="party_id" valueNumeric="16"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-03-22"/>
+            <column name="due_date" value="2026-04-22"/>
+            <column name="total_amount" valueNumeric="1750.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="21"/>
+            <column name="invoice_id" valueNumeric="23"/>
+            <column name="amount" valueNumeric="1750.00"/>
+            <column name="payment_date" value="2026-04-15"/>
+            <column name="reference" value="ACH-TWL-03"/>
+        </insert>
+
+        <!-- Apr 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="24"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-107"/>
+            <column name="party_id" valueNumeric="11"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-04-05"/>
+            <column name="due_date" value="2026-05-05"/>
+            <column name="total_amount" valueNumeric="4200.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="22"/>
+            <column name="invoice_id" valueNumeric="24"/>
+            <column name="amount" valueNumeric="4200.00"/>
+            <column name="payment_date" value="2026-04-28"/>
+            <column name="reference" value="AUTO-AWS-APR"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="25"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-108"/>
+            <column name="party_id" valueNumeric="17"/>
+            <column name="invoice_status" value="OVERPAID"/>
+            <column name="invoice_date" value="2026-04-17"/>
+            <column name="due_date" value="2026-05-17"/>
+            <column name="total_amount" valueNumeric="2950.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="23"/>
+            <column name="invoice_id" valueNumeric="25"/>
+            <column name="amount" valueNumeric="3000.00"/>
+            <column name="payment_date" value="2026-05-02"/>
+            <column name="reference" value="WIRE-ATL-04"/>
+        </insert>
+
+        <!-- May 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="26"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-109"/>
+            <column name="party_id" valueNumeric="13"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-05-04"/>
+            <column name="due_date" value="2026-06-04"/>
+            <column name="total_amount" valueNumeric="4350.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="24"/>
+            <column name="invoice_id" valueNumeric="26"/>
+            <column name="amount" valueNumeric="4350.00"/>
+            <column name="payment_date" value="2026-05-30"/>
+            <column name="reference" value="AUTO-GCP-MAY"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="27"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-110"/>
+            <column name="party_id" valueNumeric="12"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-05-20"/>
+            <column name="due_date" value="2026-06-20"/>
+            <column name="total_amount" valueNumeric="1800.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="25"/>
+            <column name="invoice_id" valueNumeric="27"/>
+            <column name="amount" valueNumeric="900.00"/>
+            <column name="payment_date" value="2026-06-12"/>
+            <column name="reference" value="CORP-CARD-902"/>
+        </insert>
+
+        <!-- Jun 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="28"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-111"/>
+            <column name="party_id" valueNumeric="15"/>
+            <column name="invoice_status" value="PAID"/>
+            <column name="invoice_date" value="2026-06-06"/>
+            <column name="due_date" value="2026-07-06"/>
+            <column name="total_amount" valueNumeric="2450.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="26"/>
+            <column name="invoice_id" valueNumeric="28"/>
+            <column name="amount" valueNumeric="2450.00"/>
+            <column name="payment_date" value="2026-06-30"/>
+            <column name="reference" value="AUTO-DD-JUN"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="29"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-112"/>
+            <column name="party_id" valueNumeric="16"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-06-18"/>
+            <column name="due_date" value="2026-07-18"/>
+            <column name="total_amount" valueNumeric="1950.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="27"/>
+            <column name="invoice_id" valueNumeric="29"/>
+            <column name="amount" valueNumeric="1000.00"/>
+            <column name="payment_date" value="2026-07-05"/>
+            <column name="reference" value="ACH-TWL-06"/>
+        </insert>
+
+        <!-- Jul 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="30"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-113"/>
+            <column name="party_id" valueNumeric="11"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-07-05"/>
+            <column name="due_date" value="2026-08-05"/>
+            <column name="total_amount" valueNumeric="4600.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="28"/>
+            <column name="invoice_id" valueNumeric="30"/>
+            <column name="amount" valueNumeric="2300.00"/>
+            <column name="payment_date" value="2026-07-28"/>
+            <column name="reference" value="AUTO-AWS-JUL"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="31"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-114"/>
+            <column name="party_id" valueNumeric="14"/>
+            <column name="invoice_status" value="RECEIVED"/>
+            <column name="invoice_date" value="2026-07-15"/>
+            <column name="due_date" value="2026-08-15"/>
+            <column name="total_amount" valueNumeric="1300.00"/>
+        </insert>
+
+        <!-- Aug 2026 -->
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="32"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-115"/>
+            <column name="party_id" valueNumeric="13"/>
+            <column name="invoice_status" value="PARTIALLY_PAID"/>
+            <column name="invoice_date" value="2026-08-04"/>
+            <column name="due_date" value="2026-09-04"/>
+            <column name="total_amount" valueNumeric="4500.00"/>
+        </insert>
+        <insert tableName="payments">
+            <column name="id" valueNumeric="29"/>
+            <column name="invoice_id" valueNumeric="32"/>
+            <column name="amount" valueNumeric="2000.00"/>
+            <column name="payment_date" value="2026-08-25"/>
+            <column name="reference" value="AUTO-GCP-AUG"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="33"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-116"/>
+            <column name="party_id" valueNumeric="17"/>
+            <column name="invoice_status" value="RECEIVED"/>
+            <column name="invoice_date" value="2026-08-12"/>
+            <column name="due_date" value="2026-09-12"/>
+            <column name="total_amount" valueNumeric="3100.00"/>
+        </insert>
+
+        <insert tableName="invoices">
+            <column name="id" valueNumeric="34"/>
+            <column name="DTYPE" value="VendorInvoice"/>
+            <column name="invoice_number" value="BILL-2026-117"/>
+            <column name="party_id" valueNumeric="15"/>
+            <column name="invoice_status" value="RECEIVED"/>
+            <column name="invoice_date" value="2026-08-22"/>
+            <column name="due_date" value="2026-09-22"/>
+            <column name="total_amount" valueNumeric="2500.00"/>
+        </insert>
+    </changeSet>
+
+    <!-- Synchronize Auto-Increment / Sequences for H2, PostgreSQL, and MySQL -->
+    <changeSet author="saavy" id="sync-party-and-invoice-sequences" runAlways="true">
+        <!-- H2 In-Memory / Embedded Engine -->
+        <sql dbms="h2">
+            ALTER TABLE parties ALTER COLUMN id RESTART WITH 100;
+            ALTER TABLE invoices ALTER COLUMN id RESTART WITH 100;
+            ALTER TABLE payments ALTER COLUMN id RESTART WITH 100;
+        </sql>
+
+        <!-- PostgreSQL Engine -->
+        <sql dbms="postgresql">
+            SELECT setval(pg_get_serial_sequence('parties', 'id'), COALESCE(MAX(id), 1)) FROM parties;
+            SELECT setval(pg_get_serial_sequence('invoices', 'id'), COALESCE(MAX(id), 1)) FROM invoices;
+            SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE(MAX(id), 1)) FROM payments;
+        </sql>
+
+        <!-- MySQL / MariaDB Engine -->
+        <sql dbms="mysql,mariadb">
+            ALTER TABLE parties AUTO_INCREMENT = 100;
+            ALTER TABLE invoices AUTO_INCREMENT = 100;
+            ALTER TABLE payments AUTO_INCREMENT = 100;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

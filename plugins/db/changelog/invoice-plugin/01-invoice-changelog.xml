@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Parties Table -->
+    <changeSet author="ramil.saavedra" id="1778966571475-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="parties"/>
+            </not>
+        </preConditions>
+        <createTable tableName="parties">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="partiesPK"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="party_type" type="VARCHAR(30)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="phone" type="VARCHAR(50)"/>
+            <column name="tax_id" type="VARCHAR(100)"/>
+            <column name="address" type="VARCHAR(500)"/>
+            <column name="city" type="VARCHAR(100)"/>
+            <column name="state" type="VARCHAR(100)"/>
+            <column name="postal_code" type="VARCHAR(30)"/>
+            <column name="country" type="VARCHAR(100)"/>
+            <column name="notes" type="LONGTEXT"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Invoices Table -->
+    <changeSet author="ramil.saavedra (generated)" id="1778966571475-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="invoices"/>
+            </not>
+        </preConditions>
+        <createTable tableName="invoices">
+            <column name="DTYPE" type="VARCHAR(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="invoicesPK"/>
+            </column>
+            <column name="party_id" type="BIGINT"/>
+            <column name="due_date" type="date"/>
+            <column name="invoice_date" type="date"/>
+            <column name="invoice_number" type="VARCHAR(255)"/>
+            <column name="invoice_status" type="VARCHAR(50)"/>
+            <column name="total_amount" type="DECIMAL(38, 2)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="party_id" baseTableName="invoices" constraintName="FK_invoice_party" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="parties" validate="true"/>
+    </changeSet>
+
+    <!-- Migration for existing invoice table: replace counterparty_name column with party_id if needed -->
+    <changeSet author="ramil.saavedra" id="invoice-migrate-party-id">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="invoices"/>
+                <not>
+                    <columnExists tableName="invoices" columnName="party_id"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn tableName="invoices">
+            <column name="party_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="party_id" baseTableName="invoices" constraintName="FK_invoice_party" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="parties" validate="true"/>
+    </changeSet>
+
+    <!-- Invoice Files Table -->
+    <changeSet author="ramil.saavedra (generated)" id="1778966571475-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="invoice_files"/>
+            </not>
+        </preConditions>
+        <createTable tableName="invoice_files">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="invoice_filesPK"/>
+            </column>
+            <column name="content" type="LONGTEXT"/>
+            <column name="content_type" type="VARCHAR(255)"/>
+            <column name="file_name" type="VARCHAR(255)"/>
+            <column name="invoice_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="invoice_id" baseTableName="invoice_files" constraintName="FK6h89u3ngffp41w0xtarcyox6q" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="invoices" validate="true"/>
+    </changeSet>
+
+    <!-- Payments Table -->
+    <changeSet author="ramil.saavedra (generated)" id="1778966571475-4">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="payments"/>
+            </not>
+        </preConditions>
+        <createTable tableName="payments">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="paymentsPK"/>
+            </column>
+            <column name="content" type="LONGTEXT"/>
+            <column name="content_type" type="VARCHAR(255)"/>
+            <column name="file_name" type="VARCHAR(255)"/>
+            <column name="amount" type="DECIMAL(38, 2)"/>
+            <column name="payment_date" type="date"/>
+            <column name="reference" type="VARCHAR(255)"/>
+            <column name="invoice_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="invoice_id" baseTableName="payments" constraintName="FKrbqec6be74wab8iifh8g3i50i" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="invoices" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

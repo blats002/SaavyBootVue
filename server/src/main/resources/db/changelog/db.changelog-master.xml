@@ -48,7 +48,6 @@
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_roles" constraintName="FK_user_roles_user" referencedColumnNames="id" referencedTableName="users"/>
         <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="user_roles" constraintName="FK_user_roles_role" referencedColumnNames="id" referencedTableName="roles"/>
     </changeSet>
-
     <changeSet author="saavy" id="security-seed-002">
         <insert tableName="roles">
             <column name="name" value="ROLE_ADMIN"/>
@@ -75,58 +74,41 @@
             <column name="role_id" valueNumeric="1"/>
         </insert>
     </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-1">
-        <createTable tableName="product">
+    <changeSet author="saavy" id="plugin-config-001">
+        <createTable tableName="plugin_config">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="productPK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="plugin_config_pk"/>
             </column>
-            <column name="name" type="VARCHAR(255)">
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uc_plugin_config_name"/>
+            </column>
+            <column name="display_name" type="VARCHAR(150)">
                 <constraints nullable="false"/>
             </column>
-            <column name="price" type="FLOAT(53)">
+            <column name="dashboard_title" type="VARCHAR(150)"/>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="version" type="VARCHAR(50)"/>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
+            <column name="updated_at" type="TIMESTAMP"/>
         </createTable>
     </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-2">
-        <createTable tableName="stock">
-            <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="stockPK"/>
-            </column>
-            <column name="quantity" type="INTEGER">
-                <constraints nullable="false"/>
-            </column>
-            <column name="product_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="supplier_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-3">
-        <createTable tableName="supplier">
-            <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="supplierPK"/>
-            </column>
-            <column name="contact_email" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-4">
-        <addUniqueConstraint columnNames="contact_email" constraintName="UC_SUPPLIERCONTACT_EMAIL_COL" tableName="supplier"/>
-    </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-5">
-        <addForeignKeyConstraint baseColumnNames="product_id" baseTableName="stock" constraintName="FKjghkvw2snnsr5gpct0of7xfcf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="product" validate="true"/>
-    </changeSet>
-    <changeSet author="Ramil (generated)" id="1778512693231-6">
-        <addForeignKeyConstraint baseColumnNames="supplier_id" baseTableName="stock" constraintName="FKl2fbubw80ojtirp051oms6piu" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="supplier" validate="true"/>
+
+    <changeSet author="saavy" id="plugin-config-002">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="plugin_config" columnName="dashboard_title"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="plugin_config">
+            <column name="dashboard_title" type="VARCHAR(150)"/>
+        </addColumn>
     </changeSet>
 
     <!-- Dynamic Plugin Changelogs -->
     <includeAll path="db/changelog/plugins" errorIfMissingOrEmpty="false"/>
+
+    <!-- Schema Drops & Cleanup (e.g. dropped plugin or core tables) -->
+    <includeAll path="db/changelog/drops" errorIfMissingOrEmpty="false"/>
 </databaseChangeLog>

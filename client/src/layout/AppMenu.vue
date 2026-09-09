@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import { menuState } from './menuConfig';
 import { getPluginMenus } from '../plugins/pluginLoader';
+import { pluginState } from '../plugins/pluginState';
 
 const defaultHomeMenu = {
     label: 'Home',
@@ -30,11 +31,22 @@ const adminMenu = {
             role: 'ROLE_ADMIN',
             icon: 'pi pi-fw pi-shield',
             to: '/pages/roles'
+        },
+        {
+            label: 'Plugins',
+            role: 'ROLE_ADMIN',
+            icon: 'pi pi-fw pi-box',
+            to: '/pages/plugins'
         }
     ]
 };
 
+onMounted(() => {
+    pluginState.fetchActivePlugins();
+});
+
 const model = computed(() => {
+    // getPluginMenus() automatically reacts when pluginState.activePlugins changes
     const pluginMenus = getPluginMenus();
     if (menuState.customMenu && menuState.customMenu.length > 0) {
         return [

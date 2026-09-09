@@ -23,10 +23,6 @@ public class UiFieldMetadataService {
 
     @Autowired
     public UiFieldMetadataService(@Autowired(required = false) List<EntityRegistryProvider> providers) {
-        // 1. Register core built-in entities
-        entityRegistry.put("users", UserDTO.class);
-        entityRegistry.put("roles", RoleDTO.class);
-        entityRegistry.put("userrole", UserRoleDTO.class);
 
         // 2. Automatically register all downstream domain entities provided by Spring components
         if (providers != null) {
@@ -91,9 +87,12 @@ public class UiFieldMetadataService {
                 master.dialogHeader(),
                 master.optionLabel(),
                 master.messages(),
-                master.masterEndPoint()
+                master.masterEndPoint(),
+                master.deletable(),
+                master.deletableField()
         );
     }
+
 
     public boolean hasMethod(Class cls, String methodName) {
         try {

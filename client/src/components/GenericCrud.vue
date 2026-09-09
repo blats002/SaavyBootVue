@@ -5,6 +5,7 @@ import { useToast } from 'primevue/usetoast';
 import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 import Image from 'primevue/image';
+import Checkbox from 'primevue/checkbox';
 import { debounce } from 'lodash';
 import AuthService from '../service/AuthService';
 
@@ -77,8 +78,31 @@ const props = defineProps({
     deleteWithPayload: {
         type: Boolean,
         default: false
+    },
+    showDeleteButton: {
+        type: Boolean,
+        default: true
+    },
+    showNewButton: {
+        type: Boolean,
+        default: null
+    },
+    showSelectionColumn: {
+        type: Boolean,
+        default: null
+    },
+    deletableField: {
+        type: String,
+        default: ''
+    },
+    canDelete: {
+        type: [Function, Boolean],
+        default: null
     }
 });
+
+
+
 
 const isRoleAuthorized = computed(() => {
     if (!props.role) return true;
@@ -107,10 +131,10 @@ const deleteRecordsDialog = ref(false);
 
 const leftToolBarButtons = [
     {
-      key: 'refresh',
-      label: 'New',
-      icon: 'pi pi-refresh',
-      class: 'p-button-success mr-2'
+        key: 'refresh',
+        label: 'Refresh',
+        icon: 'pi pi-refresh',
+        class: 'p-button-secondary mr-2'
     },
     {
         key: 'new',
@@ -125,6 +149,7 @@ const leftToolBarButtons = [
         class: 'p-button-danger'
     }
 ];
+
 
 const formDialogButtons = [
     {
@@ -463,20 +488,67 @@ const confirmDeleteSelected = () => {
     deleteRecordsDialog.value = true;
 };
 
-const getLeftToolBarButtons = () => {
-    return leftToolBarButtons.map((button) => {
-        if (button.key === 'delete-selected') {
-            const hasSelection = Array.isArray(selectedRecords.value) ? selectedRecords.value.length > 0 : !!selectedRecords.value;
-
-            return {
-                ...button,
-                disabled: !hasSelection
-            };
-        }
-
-        return button;
-    });
+const isRowDeletable = (row) => {
+    if (props.showDeleteButton === false) return false;
+    if (typeof props.canDelete === 'function') {
+        return props.canDelete(row);
+    }
+    if (props.canDelete === false) return false;
+    if (props.deletableField && row && row[props.deletableField] !== undefined) {
+        return Boolean(row[props.deletableField]);
+    }
+    return true;
 };
+
+const shouldShowNewButton = () => {
+    if (props.showNewButton !== null && props.showNewButton !== undefined) {
+        return Boolean(props.showNewButton);
+    }
+    // If deletion is disabled for the entity (e.g. meta.deletable is false), hide Add button too
+    if (props.showDeleteButton === false) {
+        return false;
+    }
+    return true;
+};
+
+const shouldShowSelectionColumn = () => {
+    if (props.showSelectionColumn !== null && props.showSelectionColumn !== undefined) {
+        return Boolean(props.showSelectionColumn);
+    }
+    // If deletion is disabled, bulk selection checkboxes are unnecessary
+    if (props.showDeleteButton === false) {
+        return false;
+    }
+    return Boolean(props.showToolbar);
+};
+
+
+const getLeftToolBarButtons = () => {
+    return leftToolBarButtons
+        .filter((button) => {
+            if (button.key === 'new' && !shouldShowNewButton()) {
+                return false;
+            }
+            if (button.key === 'delete-selected' && props.showDeleteButton === false) {
+                return false;
+            }
+            return true;
+        })
+        .map((button) => {
+            if (button.key === 'delete-selected') {
+                const hasSelection = Array.isArray(selectedRecords.value) ? selectedRecords.value.length > 0 : !!selectedRecords.value;
+
+                return {
+                    ...button,
+                    disabled: !hasSelection
+                };
+            }
+
+            return button;
+        });
+};
+
+
 
 const handlePanelButtonClick = (button) => {
     if (button.key === 'new') {
@@ -577,7 +649,18 @@ const getFieldDisplayValue = (rowData, field) => {
     }
 
     if (field.type === 'enum') {
-        return field.options.find((option) => option.value === value).label;
+        if (!field.options && field.enumOptionsJSON) {
+            try {
+                field.options = JSON.parse(field.enumOptionsJSON);
+            } catch (e) {
+                field.options = [];
+            }
+        }
+        if (Array.isArray(field.options)) {
+            const option = field.options.find((opt) => opt.value === value);
+            return option && option.label !== undefined ? option.label : value;
+        }
+        return value;
     }
 
     if (field.type === 'manyToOne') {
@@ -588,7 +671,7 @@ const getFieldDisplayValue = (rowData, field) => {
         const optionLabel = field.optionLabel || 'name';
 
         if (typeof value === 'object') {
-            return value[optionLabel] || value.id || '';
+            return value[optionLabel] || value.name || value.id || '';
         }
 
         return value;
@@ -650,7 +733,6 @@ const dataTableRef = ref();
     <div v-if="isRoleAuthorized" class="grid">
         <div class="col-12 h-full flex flex-column">
             <GenericPanel class="flex-1" :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getLeftToolBarButtons()" @button-click="handlePanelButtonClick">
-                <Toast />
                 <DataTable
                     ref="dataTableRef"
                     :value="records"
@@ -680,13 +762,15 @@ const dataTableRef = ref();
                         </div>
                     </template>
 
-                    <Column v-if="showToolbar" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
+                    <Column v-if="shouldShowSelectionColumn()" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
 
                     <Column v-if="showToolbar" headerStyle="min-width:12rem;">
+
                       <template #body="slotProps">
                         <Button icon="pi pi-pencil" v-tooltip.top="'Edit'" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
-                        <Button icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger" @click="confirmDeleteRecord(slotProps.data)" />
+                        <Button v-if="isRowDeletable(slotProps.data)" icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger" @click="confirmDeleteRecord(slotProps.data)" />
                         <Button
+
                             v-if="showDetailButton"
                             :icon="detailButtonIcon"
                             v-tooltip.top="detailButtonTooltip"
@@ -700,43 +784,36 @@ const dataTableRef = ref();
                         <template #body="slotProps">
                             <span class="p-column-title">{{ field.label }}</span>
 
-                              <Image
-                              v-if="field.type === 'image' && slotProps.data[field.name]"
-                              :src="slotProps.data[field.name]"
-                              preview
-                              imageClass="table-image"
-                              width="50"
-                              />
+                            <Checkbox
+                                v-if="field.type === 'checkbox' || field.type === 'boolean'"
+                                :modelValue="Boolean(slotProps.data[field.name])"
+                                :binary="true"
+                                :disabled="true"
+                            />
 
-                              <Button
-                                  v-if="(field.type === 'file' || field.type === 'image') && slotProps.data[field.name]"
-                                  icon="pi pi-download"
-                                  :label="field.type === 'file'?'Download':''"
-                                  link
-                                  @click="downloadFile(
-                                      slotProps.data.content,
-                                      slotProps.data[field.fileNameField],
-                                      slotProps.data[field.contentTypeField]
-                                  )"
-                              />
+                            <Image
+                                v-else-if="field.type === 'image' && slotProps.data[field.name]"
+                                :src="slotProps.data[field.name]"
+                                preview
+                                imageClass="table-image"
+                                width="50"
+                            />
 
+                            <Button
+                                v-else-if="(field.type === 'file' || field.type === 'image') && slotProps.data[field.name]"
+                                icon="pi pi-download"
+                                :label="field.type === 'file' ? 'Download' : ''"
+                                link
+                                @click="downloadFile(
+                                    slotProps.data.content,
+                                    slotProps.data[field.fileNameField],
+                                    slotProps.data[field.contentTypeField]
+                                )"
+                            />
 
-<!--                          <Image-->
-<!--                              v-else-if="field.type === 'file'"-->
-<!--                              :src="slotProps.data && slotProps.data[field.name]"-->
-<!--                              icon="pi pi-download"-->
-<!--                              class="p-button-text p-button-sm"-->
-<!--                              label="Download"-->
-<!--                              @click="downloadFile(-->
-<!--                                  slotProps.data[field.name].content || slotProps.data[field.name],-->
-<!--                                  slotProps.data[field.name].fileName || field.label-->
-<!--                              )"-->
-<!--                              width="50"-->
-<!--                          />-->
-
-                          <div v-else>
+                            <div v-else>
                                 {{ getFieldDisplayValue(slotProps.data, field) }}
-                              </div>
+                            </div>
                         </template>
                     </Column>
                 </DataTable>

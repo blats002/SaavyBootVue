@@ -6,6 +6,7 @@ import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
+import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import AuthService from '../service/AuthService';
@@ -64,6 +65,17 @@ const updateField = (fieldName, value) => {
 };
 
 const getFieldOptions = (field) => {
+    if (field.options && Array.isArray(field.options) && field.options.length > 0) {
+        return field.options;
+    }
+    if (field.enumOptionsJSON) {
+        try {
+            field.options = JSON.parse(field.enumOptionsJSON);
+            return field.options;
+        } catch (e) {
+            return [];
+        }
+    }
     return field.options || [];
 };
 
@@ -360,6 +372,11 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
             <label :for="field.name">{{ field.label }}</label>
             <Calendar :id="field.name" :modelValue="modelValue[field.name]" :class="{ 'p-invalid': hasFieldError(field) }" @update:modelValue="updateField(field.name, $event)" />
             <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
+        </div>
+
+        <div v-else-if="field.type === 'checkbox' || field.type === 'boolean'" class="field-checkbox mb-3">
+            <Checkbox :id="field.name" :modelValue="Boolean(modelValue[field.name])" :binary="true" @update:modelValue="updateField(field.name, $event)" />
+            <label :for="field.name" class="ml-2 mb-0">{{ field.label }}</label>
         </div>
 
         <div v-else-if="field.type === 'datetime'" class="field">
