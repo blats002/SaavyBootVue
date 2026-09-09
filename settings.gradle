@@ -14,7 +14,7 @@ def pluginsDir = file('plugins')
 if (pluginsDir.exists() && pluginsDir.isDirectory()) {
     pluginsDir.listFiles().each { pluginDir ->
         def serverDir = new File(pluginDir, 'server')
-        if (pluginDir.isDirectory() && serverDir.exists() && new File(serverDir, 'build.gradle').exists()) {
+        if (pluginDir.isDirectory() && serverDir.exists() && new File(serverDir, 'src').exists()) {
             def projectName = ":plugins:${pluginDir.name}:server"
             include projectName
             project(projectName).projectDir = serverDir

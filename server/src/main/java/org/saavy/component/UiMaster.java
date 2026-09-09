@@ -13,4 +13,6 @@ public @interface UiMaster {
     String optionLabel() default "";
     String messages() default "";
     String masterEndPoint() default "";
+    boolean deletable() default true;
+    String deletableField() default "";
 }

@@ -9,4 +9,9 @@ import java.util.Map;
  */
 public interface DashboardCardProvider {
     List<Map<String, Object>> getCards();
+
+    default String getPluginName() {
+        return null;
+    }
 }
+

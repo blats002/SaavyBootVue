@@ -3,12 +3,17 @@
 import { computed } from 'vue';
 import Card from "primevue/card";
 import AuthService from '../../service/AuthService';
+import { pluginState } from '../../plugins/pluginState';
 
 const props = defineProps({
   title: String,
   icon : String,
   content: [String, Number],
   footer: Object,
+  plugin: {
+    type: String,
+    default: null
+  },
   role: {
     type: [String, Array],
     default: null
@@ -16,6 +21,7 @@ const props = defineProps({
 });
 
 const isRoleAuthorized = computed(() => {
+  if (props.plugin && !pluginState.isPluginEnabled(props.plugin)) return false;
   if (!props.role) return true;
   return AuthService.hasRole(props.role);
 });

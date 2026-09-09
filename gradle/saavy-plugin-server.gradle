@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'idea'
 apply plugin: 'io.spring.dependency-management'
 
 group = 'org.saavy.plugins'
@@ -47,41 +48,252 @@ tasks.named('test') {
 // ============================================================================
 // Plugin Liquibase Diff Changelog Generation Task
 // ============================================================================
-def pluginChangelogDir = "${projectDir}/src/main/resources/db/changelog/plugins"
-def pluginDiffFile = "${pluginChangelogDir}/${project.name}-diff-changelog.xml"
+def pluginName = project.parent != null ? project.parent.name : project.name
+def pluginChangelogDir = "${rootProject.projectDir}/plugins/db/changelog/${pluginName}"
+def pluginDiffFile = "${pluginChangelogDir}/${pluginName}-diff-changelog.xml"
+
+
+def getPluginEntityTableNames = {
+    def tableNames = [] as Set
+
+    // 1. Source-code scan (Fast, resilient, and immune to classloader/dependency issues)
+    try {
+        def entitySuperClasses = [:]
+        def classTables = [:]
+
+        sourceSets.main.java.srcDirs.each { srcDir ->
+            if (srcDir.exists()) {
+                srcDir.eachFileRecurse { file ->
+                    if (file.name.endsWith('.java')) {
+                        def text = file.text
+                        if (text =~ /@Entity\b/) {
+                            def classMatcher = text =~ /(?:public\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?/
+                            if (classMatcher.find()) {
+                                def className = classMatcher.group(1)
+                                def superName = classMatcher.group(2)
+                                if (superName) {
+                                    entitySuperClasses[className] = superName
+                                }
+                                def tableMatcher = text =~ /@Table\s*\([^)]*name\s*=\s*"([^"]+)"/
+                                if (tableMatcher.find()) {
+                                    classTables[className] = tableMatcher.group(1).trim()
+                                } else {
+                                    classTables[className] = className
+                                }
+                            }
+                            def joinMatcher = text =~ /@JoinTable\s*\([^)]*name\s*=\s*"([^"]+)"/
+                            while (joinMatcher.find()) {
+                                tableNames.add(joinMatcher.group(1).trim())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        classTables.each { className, tableName ->
+            def current = className
+            while (entitySuperClasses[current] && !classTables[current]) {
+                current = entitySuperClasses[current]
+            }
+            if (entitySuperClasses[className] && classTables[entitySuperClasses[className]]) {
+                tableNames.add(classTables[entitySuperClasses[className]])
+            } else {
+                tableNames.add(tableName)
+            }
+        }
+    } catch (Throwable t) {
+        logger.lifecycle(">>> [DEBUG] Error scanning source files for entities: ${t.message}")
+    }
+
+    // 2. Classloader bytecode scan with full compile & runtime classpath
+    try {
+        def classFiles = []
+        sourceSets.main.output.classesDirs.each { dir ->
+            if (dir.exists()) {
+                dir.eachFileRecurse { f ->
+                    if (f.name.endsWith('.class') && !f.name.contains('$')) {
+                        classFiles << [dir: dir, file: f]
+                    }
+                }
+            }
+        }
+
+        if (!classFiles.isEmpty()) {
+            def cpFiles = (sourceSets.main.compileClasspath.files + 
+                           sourceSets.main.runtimeClasspath.files + 
+                           project(':server').configurations.runtimeClasspath.files + 
+                           project(':server').sourceSets.main.output.classesDirs.files + 
+                           sourceSets.main.output.classesDirs.files).unique()
+            def urls = cpFiles.collect { it.toURI().toURL() } as URL[]
+            def cl = new URLClassLoader(urls, Thread.currentThread().contextClassLoader)
+
+            classFiles.each { item ->
+                def relativePath = item.dir.toPath().relativize(item.file.toPath()).toString()
+                def className = relativePath.replace(File.separator, '.').replaceAll('\\.class$', '')
+                try {
+                    def clazz = cl.loadClass(className)
+                    def isEntity = clazz.annotations.any { 
+                        def aName = it.annotationType().name
+                        aName == 'jakarta.persistence.Entity' || aName == 'javax.persistence.Entity' 
+                    }
+                    if (isEntity) {
+                        def currentClass = clazz
+                        boolean foundTable = false
+                        while (currentClass != null && currentClass != Object.class) {
+                            def tableAnn = currentClass.annotations.find { 
+                                def aName = it.annotationType().name
+                                aName == 'jakarta.persistence.Table' || aName == 'javax.persistence.Table'
+                            }
+                            if (tableAnn != null) {
+                                try {
+                                    def name = tableAnn.name()
+                                    if (name != null && !name.trim().isEmpty()) {
+                                        tableNames.add(name.trim())
+                                        foundTable = true
+                                        break
+                                    }
+                                } catch (Throwable ignored) {}
+                            }
+                            currentClass = currentClass.superclass
+                        }
+                        if (!foundTable) {
+                            tableNames.add(clazz.simpleName.trim())
+                        }
+
+                        clazz.declaredFields.each { field ->
+                            def joinTable = field.annotations.find { 
+                                def aName = it.annotationType().name
+                                aName == 'jakarta.persistence.JoinTable' || aName == 'javax.persistence.JoinTable'
+                            }
+                            if (joinTable != null) {
+                                try {
+                                    def name = joinTable.name()
+                                    if (name != null && !name.trim().isEmpty()) {
+                                        tableNames.add(name.trim())
+                                    }
+                                } catch (Throwable ignored) {}
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+    } catch (Throwable t) {
+        logger.lifecycle(">>> [DEBUG] Error in bytecode entity scanner: ${t.message}")
+    }
+
+    return tableNames
+}
+
+def getPluginHistoricTableNames = {
+    def tableNames = [] as Set
+    def dir = file(pluginChangelogDir)
+    if (dir.exists()) {
+        dir.eachFileRecurse { f ->
+            if (f.name.endsWith('.xml')) {
+                try {
+                    def m = f.text =~ /<createTable\s+[^>]*tableName="([^"]+)"/
+                    while (m.find()) {
+                        tableNames.add(m.group(1).trim())
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+    }
+    return tableNames
+}
 
 tasks.register('liquibaseJpaDiffChangeLog', JavaExec) {
     group = 'liquibase'
-    description = "Generates a Liquibase diff changelog for ${project.name} JPA entities"
+    description = "Generates a Liquibase diff changelog for ${pluginName} JPA entities"
 
     dependsOn classes
     dependsOn ':server:classes'
 
     classpath = project(':server').configurations.liquibaseRuntime + 
                 project(':server').sourceSets.main.runtimeClasspath + 
+                sourceSets.main.compileClasspath +
                 sourceSets.main.runtimeClasspath
 
     mainClass = 'liquibase.integration.commandline.LiquibaseCommandLine'
 
     doFirst {
         file(pluginChangelogDir).mkdirs()
+
+        def liquibaseUrl = project.hasProperty('databaseUrl') ? databaseUrl : (project(':server').hasProperty('databaseUrl') ? project(':server').databaseUrl : '')
+        def liquibaseUsername = project.hasProperty('databaseUserName') ? databaseUserName : (project(':server').hasProperty('databaseUserName') ? project(':server').databaseUserName : '')
+        def liquibasePassword = project.hasProperty('databasePassword') ? databasePassword : (project(':server').hasProperty('databasePassword') ? project(':server').databasePassword : '')
+        def liquibaseDriver = project.hasProperty('databaseDriver') ? databaseDriver : (project(':server').hasProperty('databaseDriver') ? project(':server').databaseDriver : '')
+        def liquibaseDialect = project.hasProperty('databaseDialect') ? databaseDialect : (project(':server').hasProperty('databaseDialect') ? project(':server').databaseDialect : '')
+
+        def activeTables = getPluginEntityTableNames()
+        def historicTables = getPluginHistoricTableNames()
+        def allowedTables = (activeTables + historicTables) as Set
+        logger.lifecycle(">>> [Liquibase] Plugin '${pluginName}' active entity tables: ${activeTables}, historic tables: ${historicTables}")
+
+        def cmdArgs = [
+            "--log-level=debug",
+            "--search-path=${pluginChangelogDir},${projectDir},${projectDir}/src/main/resources,${project(':server').projectDir}/src/main/resources",
+            "--changeLogFile=${pluginDiffFile}",
+            "--url=${liquibaseUrl}",
+            "--username=${liquibaseUsername}",
+            "--password=${liquibasePassword}",
+            "--driver=${liquibaseDriver}",
+            "--referenceUrl=hibernate:spring:org.saavy?dialect=${liquibaseDialect}"
+        ]
+
+        if (!allowedTables.isEmpty()) {
+            def tablePattern = allowedTables.collect { java.util.regex.Pattern.quote(it) }.join('|')
+            // Scope Liquibase diff to active + historic tables belonging to this plugin
+            cmdArgs.add("--includeObjects=(?i)^(${tablePattern})\$")
+        }
+
+        cmdArgs.add('diffChangeLog')
+        setArgs(cmdArgs)
     }
 
-    def liquibaseUrl = project.hasProperty('databaseUrl') ? databaseUrl : (project(':server').hasProperty('databaseUrl') ? project(':server').databaseUrl : '')
-    def liquibaseUsername = project.hasProperty('databaseUserName') ? databaseUserName : (project(':server').hasProperty('databaseUserName') ? project(':server').databaseUserName : '')
-    def liquibasePassword = project.hasProperty('databasePassword') ? databasePassword : (project(':server').hasProperty('databasePassword') ? project(':server').databasePassword : '')
-    def liquibaseDriver = project.hasProperty('databaseDriver') ? databaseDriver : (project(':server').hasProperty('databaseDriver') ? project(':server').databaseDriver : '')
-    def liquibaseDialect = project.hasProperty('databaseDialect') ? databaseDialect : (project(':server').hasProperty('databaseDialect') ? project(':server').databaseDialect : '')
+    doLast {
+        def diffFile = file(pluginDiffFile)
+        if (diffFile.exists()) {
+            def content = diffFile.text
+            def validTables = (getPluginEntityTableNames() + getPluginHistoricTableNames()).collect { it.toLowerCase() }
 
-    args(
-        "--log-level=debug",
-        "--search-path=${projectDir},${projectDir}/src/main/resources,${project(':server').projectDir}/src/main/resources",
-        "--changeLogFile=${pluginDiffFile}",
-        "--url=${liquibaseUrl}",
-        "--username=${liquibaseUsername}",
-        "--password=${liquibasePassword}",
-        "--driver=${liquibaseDriver}",
-        "--referenceUrl=hibernate:spring:org.saavy?dialect=${liquibaseDialect}",
-        'diffChangeLog'
-    )
+            if (!validTables.isEmpty()) {
+                // Safeguard: Remove any changeSet that operates on foreign / other plugin tables
+                def cleanedContent = content.replaceAll(/(?s)\s*<changeSet[^>]*>.*?<\/changeSet>/) { fullMatch ->
+                    def tableMatcher = fullMatch =~ /(?:tableName|baseTableName)="([^"]+)"/
+                    def referencedTables = []
+                    while (tableMatcher.find()) {
+                        referencedTables << tableMatcher.group(1).toLowerCase()
+                    }
+                    if (!referencedTables.isEmpty() && referencedTables.any { !validTables.contains(it) }) {
+                        logger.lifecycle("Removed cross-plugin changeSet referencing foreign table(s) ${referencedTables} from ${pluginName} diff changelog.")
+                        return ""
+                    }
+                    return fullMatch
+                }
+
+                // Add safe preConditions to dropTable changesets if missing
+                cleanedContent = cleanedContent.replaceAll(/(?s)<changeSet\s+([^>]*)>(.*?)<\/changeSet>/) { fullChangeSet, attrs, inner ->
+                    if (!inner.contains('<preConditions') && inner.contains('<dropTable')) {
+                        def tableMatcher = inner =~ /<dropTable\s+tableName="([^"]+)"/
+                        if (tableMatcher.find()) {
+                            def tbl = tableMatcher.group(1)
+                            return "<changeSet ${attrs}>\n        <preConditions onFail=\"MARK_RAN\">\n            <tableExists tableName=\"${tbl}\"/>\n        </preConditions>${inner}</changeSet>"
+                        }
+                    }
+                    return fullChangeSet
+                }
+
+                diffFile.text = cleanedContent
+
+                def hasDrops = cleanedContent =~ /<dropTable\b|<dropForeignKeyConstraint\b|<dropColumn\b/
+                if (hasDrops.find()) {
+                    logger.lifecycle(">>> [Liquibase] Drop changesets generated in ${pluginDiffFile}")
+                }
+            }
+        }
+    }
 }
+

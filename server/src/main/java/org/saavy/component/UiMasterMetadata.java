@@ -5,6 +5,8 @@ public record UiMasterMetadata(
         String dialogHeader,
         String optionLabel,
         String messagesJSON,
-        String masterEndPoint
+        String masterEndPoint,
+        boolean deletable,
+        String deletableField
 ) {
 }

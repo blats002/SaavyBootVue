@@ -3,6 +3,25 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.6' apply false
     id 'org.liquibase.gradle' version '2.2.2' apply false
     id 'com.github.node-gradle.node' version '3.5.1' apply false
+    id 'idea'
+}
+
+allprojects {
+    apply plugin: 'idea'
+
+    idea {
+        module {
+            downloadJavadoc = true
+            downloadSources = true
+        }
+    }
+}
+
+// ============================================================================
+// Auto-configure all discovered plugin server projects
+// ============================================================================
+configure(subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }) {
+    apply from: rootProject.file('gradle/saavy-plugin-server.gradle')
 }
 
 // ============================================================================
@@ -21,6 +40,12 @@ tasks.register('bootRunDebug') {
     dependsOn ':server:bootRunDebug'
 }
 
+tasks.register('bootJar') {
+    group = 'build'
+    description = 'Packages the Spring Boot executable fat JAR with all active plugins and frontend assets included'
+    dependsOn ':server:bootJar'
+}
+
 tasks.register('serve') {
     group = 'client'
     description = 'Starts the client development server (Vite dev) with all plugins'
@@ -33,8 +58,65 @@ tasks.register('buildClient') {
     dependsOn ':client:build'
 }
 
+tasks.register('buildPlugins') {
+    group = 'build'
+    description = 'Compiles and tests all discovered plugin server modules'
+    dependsOn subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }.collect { pluginProj ->
+        pluginProj.tasks.matching { t -> t.name == 'build' }
+    }
+}
+
+tasks.register('pluginDiff') {
+    group = 'liquibase'
+    description = 'Runs liquibaseJpaDiffChangeLog for a specific plugin specified by -Pplugin=<plugin-name> or -Pname=<plugin-name>'
+    def cliPluginName = providers.gradleProperty('plugin').orNull ?: providers.gradleProperty('name').orNull
+    if (cliPluginName && cliPluginName != project.name) {
+        dependsOn ":plugins:${cliPluginName}:server:liquibaseJpaDiffChangeLog"
+    } else {
+        doLast {
+            throw new GradleException("Please specify the plugin name using -Pplugin=<plugin-name> (or -Pname=<plugin-name>), e.g.: ./gradlew pluginDiff -Pplugin=invoice-plugin")
+        }
+    }
+}
+
+tasks.register('pluginsDiff') {
+    group = 'liquibase'
+    description = 'Runs liquibaseJpaDiffChangeLog for all discovered plugin server modules'
+    dependsOn subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }.collect { pluginProj ->
+        pluginProj.tasks.matching { t -> t.name == 'liquibaseJpaDiffChangeLog' }
+    }
+}
+
 tasks.register('clean') {
     group = 'build'
     description = 'Cleans build directories for host and all plugins'
     dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'clean' } }
+}
+
+// ============================================================================
+// Docker Management Tasks (WSL)
+// ============================================================================
+
+tasks.register('postgresUp', Exec) {
+    group = 'docker'
+    description = 'Starts ONLY the PostgreSQL container in WSL (without the app)'
+    commandLine 'wsl', 'docker', 'compose', 'up', '-d', 'postgres'
+}
+
+tasks.register('postgresDown', Exec) {
+    group = 'docker'
+    description = 'Stops the PostgreSQL container in WSL'
+    commandLine 'wsl', 'docker', 'compose', 'stop', 'postgres'
+}
+
+tasks.register('dockerUp', Exec) {
+    group = 'docker'
+    description = 'Starts all Docker containers (PostgreSQL and app) in WSL'
+    commandLine 'wsl', 'docker', 'compose', 'up', '-d'
+}
+
+tasks.register('dockerDown', Exec) {
+    group = 'docker'
+    description = 'Stops and tears down all Docker containers in WSL'
+    commandLine 'wsl', 'docker', 'compose', 'down'
 }

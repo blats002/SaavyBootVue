@@ -18,4 +18,13 @@ public abstract class BaseDashBoardController {
 
     @GetMapping("/cards")
     public abstract List<Map<String, Object>> getCards();
+
+    @GetMapping("/charts")
+    public abstract List<Map<String, Object>> getCharts();
+
+    @GetMapping("/tables")
+    public abstract List<Map<String, Object>> getTables();
+
+    @GetMapping("/tabs")
+    public abstract Map<String, String> getTabs();
 }

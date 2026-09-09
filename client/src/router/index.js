@@ -2,11 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router';
 import AppLayout from '../layout/AppLayout.vue';
 import AuthService from '../service/AuthService';
 import { getPluginRoutes, getPluginDashboard } from '../plugins/pluginLoader';
+import { pluginState } from '../plugins/pluginState';
 
 export function createSaavyRouter(config = {}) {
     const customRoutes = [...getPluginRoutes(), ...(config.routes || [])];
     const dashboardComponent = config.dashboard || getPluginDashboard() || (() => import('../views/Dashboard.vue'));
-
 
     const baseChildren = [
         {
@@ -23,6 +23,11 @@ export function createSaavyRouter(config = {}) {
             path: '/pages/roles',
             name: 'roles',
             component: () => import('../views/pages/RoleManagement.vue')
+        },
+        {
+            path: '/pages/plugins',
+            name: 'plugins',
+            component: () => import('../views/pages/PluginManagement.vue')
         },
         ...customRoutes
     ];
@@ -64,7 +69,7 @@ export function createSaavyRouter(config = {}) {
     });
 
     // Navigation guard for authenticated routes
-    router.beforeEach((to, from, next) => {
+    router.beforeEach(async (to, from, next) => {
         const publicPages = ['/auth/login', '/landing', '/pages/notfound', '/auth/access', '/auth/error'];
         const authRequired = !publicPages.includes(to.path);
         const loggedIn = AuthService.isAuthenticated();
@@ -80,8 +85,20 @@ export function createSaavyRouter(config = {}) {
             return next('/');
         }
 
+        // Ensure active plugins status is loaded if logged in
+        if (loggedIn && !pluginState.isLoaded) {
+            await pluginState.fetchActivePlugins();
+        }
+
+        // Check if route belongs to a disabled plugin
+        if (to.meta && to.meta.pluginName) {
+            if (!pluginState.isPluginEnabled(to.meta.pluginName)) {
+                return next('/pages/notfound');
+            }
+        }
+
         // Role-based access control for Administration routes
-        const adminRoutes = ['/pages/users', '/pages/roles'];
+        const adminRoutes = ['/pages/users', '/pages/roles', '/pages/plugins'];
         if (adminRoutes.includes(to.path) && !AuthService.hasRole('ROLE_ADMIN')) {
             return next('/auth/access');
         }
