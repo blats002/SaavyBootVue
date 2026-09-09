@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# IDE & Editor
+.idea
+*.iml
+*.ipr
+*.iws
+.vscode
+
+# Build & Output Folders
+build/
+**/build/
+dist/
+**/dist/
+.gradle/
+**/.gradle/
+.tmp/
+**/.tmp/
+
+# Node Dependencies (Must be installed inside Linux container)
+node_modules/
+**/node_modules/
+
+# Logs
+*.log
+**/*.log
+
+# Ensure Gradle wrapper jar is included
+!gradle/wrapper/gradle-wrapper.jar
+!**/gradle-wrapper.jar

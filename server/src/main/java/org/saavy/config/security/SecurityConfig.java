@@ -21,6 +21,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.saavy.component.SecurityCustomizerProvider;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,6 +37,9 @@ public class SecurityConfig {
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+
+    @Autowired(required = false)
+    private List<SecurityCustomizerProvider> securityCustomizerProviders;
 
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080}")
     private String[] allowedOrigins;
@@ -76,20 +82,35 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        List<String> dynamicPublicEndpoints = new ArrayList<>();
+        if (securityCustomizerProviders != null) {
+            for (SecurityCustomizerProvider provider : securityCustomizerProviders) {
+                if (provider != null && provider.getPublicEndpoints() != null) {
+                    dynamicPublicEndpoints.addAll(provider.getPublicEndpoints());
+                }
+            }
+        }
+
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/metadata/**").permitAll()
+                        .requestMatchers("/api/attendance/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/", "/index.html", "/assets/**", "/demo/**", "/layout/**", "/favicon.ico", "/*.js", "/*.css", "/*.svg", "/*.png", "/*.ico").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers("/", "/index.html", "/assets/**", "/demo/**", "/layout/**", "/favicon.ico", "/*.js", "/*.css", "/*.svg", "/*.png", "/*.ico").permitAll();
+
+                    if (!dynamicPublicEndpoints.isEmpty()) {
+                        auth.requestMatchers(dynamicPublicEndpoints.toArray(new String[0])).permitAll();
+                    }
+
+                    auth.requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll();
+                });
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

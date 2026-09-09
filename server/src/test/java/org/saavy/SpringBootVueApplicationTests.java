@@ -1,4 +1,4 @@
-package org.example.springbootvue;
+package org.saavy;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

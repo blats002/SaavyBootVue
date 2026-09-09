@@ -3,8 +3,11 @@ package org.saavy.controllers;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.saavy.config.security.JwtUtils;
 import org.saavy.config.security.UserDetailsImpl;
+import org.saavy.entity.User;
+import org.saavy.entity.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +31,12 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
@@ -71,12 +81,59 @@ public class AuthController {
         ));
     }
 
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody ChangePasswordRequest request) {
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(new MessageResponse("User is not authenticated"));
+        }
+
+        if (request == null ||
+                StringUtils.isBlank(request.getCurrentPassword()) ||
+                StringUtils.isBlank(request.getNewPassword()) ||
+                StringUtils.isBlank(request.getConfirmPassword())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("All password fields are required"));
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("New password and confirm password do not match"));
+        }
+
+        if (request.getNewPassword().length() < 6) {
+            return ResponseEntity.badRequest().body(new MessageResponse("New password must be at least 6 characters"));
+        }
+
+        User user = userRepository.findById(userDetails.getId()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(new MessageResponse("User not found"));
+        }
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Current password is incorrect"));
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LoginRequest {
         private String username;
         private String password;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChangePasswordRequest {
+        private String currentPassword;
+        private String newPassword;
+        private String confirmPassword;
     }
 
     @Data
@@ -120,3 +177,4 @@ public class AuthController {
         private String message;
     }
 }
+

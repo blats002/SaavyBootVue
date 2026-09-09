@@ -142,53 +142,36 @@
 ---
 
 ### 4. ⏱️ Attendance & Bundy Clock Plugin with QR Codes (`plugins/attendance-plugin`)
-**Status**: [ ] Planned  
+**Status**: [x] Completed  
 **Goal**: Digital Bundy Clock and Employee Time & Attendance tracking system with QR code badge scanning, Kiosk mode, real-time timesheets, and HR dashboard widgets.
 
 #### Step-by-step Execution Plan:
-- [ ] **4.1 Domain Entity & DTO Structure**
-  - Create `plugins/attendance-plugin/server/src/main/java/com/saavy/attendance/`:
-    - `entity/AttendanceLog.java`:
-      - `id` (Long, PK)
-      - `employeeId` (Long or String reference to Party / Employee)
-      - `employeeName` (String snapshot)
-      - `timestamp` (LocalDateTime)
-      - `logType` (Enum: `CLOCK_IN`, `CLOCK_OUT`, `BREAK_OUT`, `BREAK_IN`)
-      - `verificationMethod` (Enum: `QR_CODE`, `MANUAL_ADMIN`, `PIN`)
-      - `kioskDeviceId` (String / IP Address)
-      - `latitude` / `longitude` (Optional geolocation)
-      - `status` (Enum: `ON_TIME`, `LATE`, `EARLY_DEPARTURE`, `OVERTIME`)
-      - `notes` (String)
-    - `entity/EmployeeBadge.java`:
-      - `id` (Long, PK)
-      - `employeeId` (Long)
-      - `qrToken` (Unique HMAC token or UUID for QR code encoding)
-      - `pinCode` (Optional fallback 4-digit PIN)
-      - `isActive` (Boolean)
-    - `dto/AttendanceLogDTO.java` with `@UiMaster(title = "Attendance Logs & Timesheets")`.
-    - `repository/AttendanceLogRepository.java` with daily/monthly shift aggregation queries.
-- [ ] **4.2 QR Code Engine & Verification Service**
-  - Integrate `zxing` (Zebra Crossing) for backend QR code badge generation:
-    - `GET /api/attendance/badges/{employeeId}/qr`: Returns PNG/SVG QR code image for badge printing.
-  - REST Endpoint `POST /api/attendance/scan-qr`:
-    - Decodes QR payload / token.
-    - Determines auto-action (e.g. if last action was `CLOCK_IN`, default next action to `CLOCK_OUT` or `BREAK_OUT`).
-    - Calculates late minutes / shift duration.
-    - Returns instant employee greeting + time confirmation.
-- [ ] **4.3 Fullscreen Bundy Clock Kiosk UI (`BundyClockKiosk.vue`)**
+- [x] **4.1 Domain Entity & DTO Structure**
+  - Created `plugins/attendance-plugin/server/src/main/java/org/saavy/`:
+    - `entity/AttendanceLog.java` & `entity/AttendanceLogDTO.java` with `@UiMaster` and `@UiField`.
+    - `entity/EmployeeBadge.java` & `entity/EmployeeBadgeDTO.java` with `@UiMaster` and `@UiField`.
+    - `reference/AttendanceLogType.java`, `reference/VerificationMethod.java`, `reference/AttendanceStatus.java`.
+    - `repository/AttendanceLogRepository.java` & `repository/EmployeeBadgeRepository.java`.
+- [x] **4.2 QR Code Engine & Verification Service**
+  - `<GenericQRCode.vue>` component with `vue-qrcode` for client-side badge rendering.
+  - `<GenericQRReader.vue>` with `vue-qrcode-reader` camera stream and target frame.
+  - REST Endpoints:
+    - `POST /api/attendance/scan-qr`: Instant punch processing with auto-detect IN vs OUT & anti-passback.
+    - `GET /api/attendance/today-summary`: Turnout and tardiness statistics.
+    - `GET /api/attendance/live-feed`: Recent 10 clock punches.
+- [x] **4.3 Fullscreen Bundy Clock Kiosk UI (`BundyClockKiosk.vue`)**
   - High-visibility digital wall clock with live date/time.
-  - Camera QR scanner using `html5-qrcode` (front/back camera selection).
-  - Audio chime/beep + visual green/red feedback for successful clock-ins.
-  - Anti-passback & debounce protection (prevents accidental double-scanning within 60 seconds).
-  - Quick manual PIN entry fallback tab.
-- [ ] **4.4 HR Admin Timesheets & Badge Management**
-  - `AttendanceManagement.vue`: Filterable timesheet table with daily present/absent summary, shift hours computation, and CSV/Excel export.
-  - `BadgeGenerator.vue`: Printable employee ID badge cards with company logo and QR codes.
-- [ ] **4.5 SPI Dashboard Widgets (`AttendanceDashboardWidgetProvider`)**
-  - KPI Stat Cards: "Present Today", "Late Arrivals", "On Break", "Absent".
-  - Real-Time Live Feed Widget: Scrolling list of recent clock-ins/outs.
-- [ ] **4.6 Liquibase Changelog & Seed Data**
-  - Create `plugins/db/changelog/attendance-plugin/01-attendance-changelog.xml` with attendance tables and demo employee badges.
+  - Camera QR scanner using `<GenericQRReader>`.
+  - Synthesized Web Audio API chime and visual green/orange/red feedback.
+  - Debounce protection and fallback manual PIN keypad dialog.
+- [x] **4.4 HR Admin Timesheets & Badge Management**
+  - `AttendanceManagement.vue`: Filterable timesheet table via `<GenericCrud>`.
+  - `BadgeGenerator.vue`: Printable employee ID cards with scannable QR codes rendered with `<GenericQRCode>`.
+- [x] **4.5 SPI Dashboard Widgets**
+  - `AttendanceDashboardCardProvider`: "Present Today" & "Late Arrivals" metric cards.
+  - `AttendanceDashboardTableProvider`: "Today's Live Attendance Feed" table on the main dashboard.
+- [x] **4.6 Liquibase Changelog & Seed Data**
+  - `plugins/db/changelog/attendance-plugin/01-attendance-changelog.xml` with table schemas and 4 demo employee badges.
 
 ---
 
@@ -237,6 +220,27 @@
   - Real-Time Activity Widget: Feed of recent automated actions and approvals.
 - [ ] **5.6 Liquibase Changelog & Seed Data**
   - Create `plugins/db/changelog/workflow-plugin/01-workflow-changelog.xml` with tables for definitions, executions, tasks, and sample default automation rules.
+
+---
+
+### 6. ⏱️ Attendance & Time-Tracking Plugin Enhancements (`plugins/attendance-plugin`)
+**Status**: [ ] Planned / Roadmap  
+**Goal**: Elevate the time & attendance module from terminal kiosk punch logging into an enterprise-grade workforce management and payroll-ready suite.
+
+#### Step-by-step Execution Plan:
+- [ ] **6.1 Shift Schedule Configuration Table (`WorkShift` Entity)**
+  - Create `entity/WorkShift.java` (`id`, `shiftName`, `startTime`, `endTime`, `gracePeriodMinutes`, `isDefault`, `isActive`).
+  - Create `dto/WorkShiftDTO.java`, `repository/WorkShiftRepository.java`, `service/WorkShiftService.java`, and controller at `/api/work-shifts`.
+  - Associate `WorkShift` with `EmployeeBadge` (per-employee or per-department shift schedule).
+  - Update `AttendanceKioskService.java` to compute late/on-time status against the employee's assigned `WorkShift` instead of the hardcoded `09:15 AM` threshold.
+- [ ] **6.2 CSV / Excel Timesheet Payroll Export**
+  - Add a one-click **"Export Timesheet (Payroll CSV)"** toolbar button in `AttendanceManagement.vue`.
+  - Support date-range selection (Pay Period) and generate formatted payroll CSV/Excel containing Employee ID, Name, Department, Date, Clock In, Clock Out, Break Durations, Total Hours Worked, and Status.
+- [ ] **6.3 WebSocket / SSE Real-Time Live Feed Broadcast**
+  - Integrate Spring WebSocket / Server-Sent Events (SSE) in `AttendanceKioskService` to broadcast punch events instantly on `/topic/attendance-feed`.
+  - Update admin screens and SPI Dashboard widgets to reflect live employee check-ins in real time with zero manual page refreshing.
+
+---
 
 ## 🚀 PROMPT-TO-SOFTWARE ENGINE & AI ASSISTANT ROADMAP
 
@@ -317,6 +321,7 @@
 ---
 
 ## ✅ COMPLETED MILESTONES
+- [x] **Time & Attendance Plugin (`attendance-plugin`)**: Full-featured attendance suite with standalone Bundy Clock Kiosk (zero-scrollbar tablet scaling, synthesized Web Audio chime, camera stream QR reader & PIN fallback), Employee Badge Studio with dynamic `BaseFile` avatar upload & high-res PNG download, timesheet logs, and dynamic Spring Security SPI customizers.
 - [x] **Dynamic Plugin Auto-Discovery**: Gradle auto-detects and compiles any folder matching `plugins/*-plugin` in `settings.gradle` and `build.gradle`.
 - [x] **Cross-Plugin Drop Table Protection**: Safe Liquibase tasks in `saavy-plugin-server.gradle` prevent accidental drops of host or peer tables.
 - [x] **GenericCrud Metadata Engine**: Enhanced `<GenericCrud>` & `<GenericForm>` supporting text, number, date, datetime, enum, boolean/checkbox, textarea, and dynamic lookups.

@@ -93,7 +93,31 @@ export const AuthService = {
             }
         }
         return null;
+    },
+
+    async changePassword({ currentPassword, newPassword, confirmPassword }) {
+        const token = this.getToken();
+        if (!token) {
+            throw new Error('User is not authenticated');
+        }
+
+        const response = await axios.post(
+            `${SERVER_URL}/api/auth/change-password`,
+            {
+                currentPassword,
+                newPassword,
+                confirmPassword
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        return response.data;
     }
 };
 
 export default AuthService;
+

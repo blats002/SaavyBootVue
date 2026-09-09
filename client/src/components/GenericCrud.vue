@@ -5,6 +5,8 @@ import { useToast } from 'primevue/usetoast';
 import GenericDialog from './GenericDialog.vue';
 import GenericPanel from './GenericPanel.vue';
 import Image from 'primevue/image';
+import Avatar from 'primevue/avatar';
+import GenericQRCode from './GenericQRCode.vue';
 import Checkbox from 'primevue/checkbox';
 import { debounce } from 'lodash';
 import AuthService from '../service/AuthService';
@@ -98,11 +100,12 @@ const props = defineProps({
     canDelete: {
         type: [Function, Boolean],
         default: null
+    },
+    customButtons: {
+        type: Array,
+        default: () => []
     }
 });
-
-
-
 
 const isRoleAuthorized = computed(() => {
     if (!props.role) return true;
@@ -150,7 +153,6 @@ const leftToolBarButtons = [
     }
 ];
 
-
 const formDialogButtons = [
     {
         key: 'cancel',
@@ -188,96 +190,96 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
-  const payload = {
-    page: 0,
-    rows: 10
-  }
-  loadRecordsWithPage(payload);
+    const payload = {
+        page: 0,
+        rows: 10
+    };
+    loadRecordsWithPage(payload);
 });
 
 watch(
     () => props.refreshKey,
     () => {
-      onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
+        onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
     }
 );
 
 watch(
     () => filters.value?.global?.value,
     debounce(() => {
-      onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
+        onPage({ page: checkCurrentPage(), rows: getDataTableRows() });
     }, 300)
 );
 
 const getDataTableRows = () => {
-  return dataTableRef.value.d_rows?dataTableRef.value.d_rows:0
-}
+    return dataTableRef.value.d_rows ? dataTableRef.value.d_rows : 0;
+};
 
 const refreshRecords = async () => {
-  const payload = {
-    page: checkCurrentPage(),
-    rows: getDataTableRows()
-  };
-  await loadRecordsWithPage(payload);
+    const payload = {
+        page: checkCurrentPage(),
+        rows: getDataTableRows()
+    };
+    await loadRecordsWithPage(payload);
 };
 
 const checkCurrentPage = () => {
-  if (dataTableRef.value) {
-    // PrimeVue exposes 'd_rows' and 'd_first' as its internal state tracking
-    const first = dataTableRef.value.d_first;
-    const rows = dataTableRef.value.d_rows;
+    if (dataTableRef.value) {
+        // PrimeVue exposes 'd_rows' and 'd_first' as its internal state tracking
+        const first = dataTableRef.value.d_first;
+        const rows = dataTableRef.value.d_rows;
 
-    const pageIndex = (first / rows);
-    return pageIndex;
-  } else {
-    return 0;
-  }
+        const pageIndex = first / rows;
+        return pageIndex;
+    } else {
+        return 0;
+    }
 };
 
 const onPage = (event) => {
-  // event.first = starting index
-  // event.rows = number of rows per page
-  // event.page = current page index
+    // event.first = starting index
+    // event.rows = number of rows per page
+    // event.page = current page index
 
-  const payload = {
-    page: event.page,
-    rows: event.rows,
-    search: filters.value?.global?.value
-  }
+    const payload = {
+        page: event.page,
+        rows: event.rows,
+        search: filters.value?.global?.value
+    };
 
-  loadRecordsWithPage(payload)
-}
+    loadRecordsWithPage(payload);
+};
 
 const getErrorMessage = (error, defaultMsg = 'An unexpected error occurred') => {
-  if (!error) return defaultMsg;
-  if (typeof error === 'string') return error;
-  if (error.response?.data) {
-    const data = error.response.data;
-    if (typeof data === 'string') return data;
-    if (data.message) return data.message;
-    if (data.error) return data.error;
-    if (Array.isArray(data.errors) && data.errors.length > 0) {
-      return data.errors.map(e => e.defaultMessage || e.message || JSON.stringify(e)).join(', ');
+    if (!error) return defaultMsg;
+    if (typeof error === 'string') return error;
+    if (error.response?.data) {
+        const data = error.response.data;
+        if (typeof data === 'string') return data;
+        if (data.message) return data.message;
+        if (data.error) return data.error;
+        if (Array.isArray(data.errors) && data.errors.length > 0) {
+            return data.errors.map((e) => e.defaultMessage || e.message || JSON.stringify(e)).join(', ');
+        }
     }
-  }
-  return error.message || defaultMsg;
+    return error.message || defaultMsg;
 };
 
 const loadRecordsWithPage = async (payload) => {
-  try {
-    const pageable = await props.service.findAllWithPage(payload);
-    records.value = pageable?.content || [];
-    totalRecords.value = pageable?.totalElements || 0;
-    console.log(records.value);
-    emit('records-loaded', records.value);
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error Loading Records',
-      detail: getErrorMessage(error, 'Failed to load records from server'),
-      life: 5000
-    });
-  }
+    try {
+        const pageable = await props.service.findAllWithPage(payload);
+        records.value = pageable?.content || [];
+        totalRecords.value = pageable?.totalElements || 0;
+        console.log(records.value);
+        emit('records-loaded', records.value);
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error Loading Records',
+            detail: getErrorMessage(error, 'Failed to load records from server'),
+            life: 5000
+        });
+    }
 };
 
 const loadRecords = async () => {
@@ -305,22 +307,16 @@ const handleRowSelect = (event) => {
 };
 
 const handleRowDoubleClick = (event) => {
-  emit('record-double-click', event.data);
+    emit('record-double-click', event.data);
 };
 
 const handleDetailButtonClick = (selectedRecord) => {
-  emit('record-detail', selectedRecord);
+    emit('record-detail', selectedRecord);
 };
 
 const createEmptyFromFields = () => {
-  return Object.fromEntries(
-      props.fields.map(field => [
-        field.name,
-        field.type === 'text' ? '' : null
-      ])
-  );
+    return Object.fromEntries(props.fields.map((field) => [field.name, field.type === 'text' || field.type === 'password' ? '' : null]));
 };
-
 
 const openNew = () => {
     record.value = createEmptyFromFields();
@@ -522,7 +518,6 @@ const shouldShowSelectionColumn = () => {
     return Boolean(props.showToolbar);
 };
 
-
 const getLeftToolBarButtons = () => {
     return leftToolBarButtons
         .filter((button) => {
@@ -548,8 +543,6 @@ const getLeftToolBarButtons = () => {
         });
 };
 
-
-
 const handlePanelButtonClick = (button) => {
     if (button.key === 'new') {
         openNew();
@@ -557,7 +550,7 @@ const handlePanelButtonClick = (button) => {
     }
 
     if (button.key === 'refresh') {
-      refreshRecords();
+        refreshRecords();
     }
 
     if (button.key === 'delete-selected') {
@@ -688,45 +681,42 @@ const getFieldDisplayValue = (rowData, field) => {
 // };
 
 const downloadFile = (base64Data, fileName = 'file', mimeType = 'application/octet-stream') => {
-  // 1. Remove the Data URL prefix if it exists (e.g., "data:image/png;base64,")
-  const base64Clean = base64Data.split(',')[1] || base64Data;
+    // 1. Remove the Data URL prefix if it exists (e.g., "data:image/png;base64,")
+    const base64Clean = base64Data.split(',')[1] || base64Data;
 
-  // 2. Decode base64 to a raw binary string
-  const binaryString = window.atob(base64Clean);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
+    // 2. Decode base64 to a raw binary string
+    const binaryString = window.atob(base64Clean);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
 
-  // 3. Convert binary string to a typed numeric array
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
+    // 3. Convert binary string to a typed numeric array
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
 
-  // 4. Create a Blob from the binary array
-  const blob = new Blob([bytes], { type: mimeType });
+    // 4. Create a Blob from the binary array
+    const blob = new Blob([bytes], { type: mimeType });
 
-  // 5. Create a temporary URL for the Blob and download it
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
+    // 5. Create a temporary URL for the Blob and download it
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
 
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link); // Required for Firefox compatibility
-  link.click();
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link); // Required for Firefox compatibility
+    link.click();
 
-  // 6. Clean up memory
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+    // 6. Clean up memory
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
 
-
 const getFileHref = (value) => {
-  if (!value) return null;
-  return value.content || value;
+    if (!value) return null;
+    return value.content || value;
 };
 
 const dataTableRef = ref();
-
-
 </script>
 
 <template>
@@ -765,50 +755,58 @@ const dataTableRef = ref();
                     <Column v-if="shouldShowSelectionColumn()" :selectionMode="getSelectionColumnMode()" headerStyle="width: 3rem" />
 
                     <Column v-if="showToolbar" headerStyle="min-width:12rem;">
-
-                      <template #body="slotProps">
-                        <Button icon="pi pi-pencil" v-tooltip.top="'Edit'" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
-                        <Button v-if="isRowDeletable(slotProps.data)" icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger" @click="confirmDeleteRecord(slotProps.data)" />
-                        <Button
-
-                            v-if="showDetailButton"
-                            :icon="detailButtonIcon"
-                            v-tooltip.top="detailButtonTooltip"
-                            :class="detailButtonClass"
-                            @click="handleDetailButtonClick(slotProps.data)"
-                        />
-                      </template>
+                        <template #body="slotProps">
+                            <Button icon="pi pi-pencil" v-tooltip.top="'Edit'" class="p-button-rounded p-button-success mr-2" @click="editRecord(slotProps.data)" />
+                            <Button v-if="isRowDeletable(slotProps.data)" icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger mr-2" @click="confirmDeleteRecord(slotProps.data)" />
+                            <Button v-if="showDetailButton" :icon="detailButtonIcon" v-tooltip.top="detailButtonTooltip" :class="detailButtonClass" @click="handleDetailButtonClick(slotProps.data)" />
+                            <Button
+                                v-for="(customButton, index) in customButtons"
+                                :key="customButton.key || index"
+                                :icon="customButton.icon"
+                                :severity="customButton.severity"
+                                v-tooltip.top="customButton.tooltip || customButton.label"
+                                :class="customButton.class || 'p-button-rounded mr-2'"
+                                @click="customButton.onClick ? customButton.onClick(slotProps.data) : null"
+                            />
+                        </template>
                     </Column>
 
                     <Column v-for="field in getTableFields()" :key="field.name" :field="field.name" :header="field.label" :sortable="field.sortable" :headerStyle="`width:${field.width || 'auto'}; min-width:8rem;`">
                         <template #body="slotProps">
                             <span class="p-column-title">{{ field.label }}</span>
 
-                            <Checkbox
-                                v-if="field.type === 'checkbox' || field.type === 'boolean'"
-                                :modelValue="Boolean(slotProps.data[field.name])"
-                                :binary="true"
-                                :disabled="true"
-                            />
+                            <Checkbox v-if="field.type === 'checkbox' || field.type === 'boolean'" :modelValue="Boolean(slotProps.data[field.name])" :binary="true" :disabled="true" />
 
-                            <Image
-                                v-else-if="field.type === 'image' && slotProps.data[field.name]"
-                                :src="slotProps.data[field.name]"
-                                preview
-                                imageClass="table-image"
-                                width="50"
-                            />
+                            <template v-else-if="field.type?.toLowerCase() === 'basefile' || field.type === 'image'">
+                                <div v-if="slotProps.data[field.name]?.content || (typeof slotProps.data[field.name] === 'string' && slotProps.data[field.name])" class="flex align-items-center">
+                                    <Image
+                                        :src="slotProps.data[field.name]?.content || slotProps.data[field.name]"
+                                        preview
+                                        imageClass="border-circle shadow-1 table-image"
+                                        width="42"
+                                        height="42"
+                                        style="object-fit: cover;"
+                                    />
+                                </div>
+                                <Avatar v-else icon="pi pi-user" shape="circle" size="normal" class="bg-gray-200 text-gray-600" />
+                            </template>
+
+                            <div v-else-if="field.type === 'qrcode' || field.type === 'qrtoken'" class="flex align-items-center">
+                                <GenericQRCode v-if="slotProps.data[field.name]" :value="String(slotProps.data[field.name])" :size="field.qrSize || 64" :margin="1" />
+                                <span v-else class="text-400 text-sm">-</span>
+                            </div>
+
+                            <template v-else-if="field.type === 'password'">
+                                <span v-if="slotProps.data[field.name]">••••••••</span>
+                                <span v-else class="text-400 text-sm">-</span>
+                            </template>
 
                             <Button
                                 v-else-if="(field.type === 'file' || field.type === 'image') && slotProps.data[field.name]"
                                 icon="pi pi-download"
                                 :label="field.type === 'file' ? 'Download' : ''"
                                 link
-                                @click="downloadFile(
-                                    slotProps.data.content,
-                                    slotProps.data[field.fileNameField],
-                                    slotProps.data[field.contentTypeField]
-                                )"
+                                @click="downloadFile(slotProps.data.content, slotProps.data[field.fileNameField], slotProps.data[field.contentTypeField])"
                             />
 
                             <div v-else>

@@ -40,7 +40,7 @@ public class UserDTO implements Serializable {
     @UiField(label = "Email", type = "text", required = true, sortable = true, order = 4)
     private String email;
 
-    @UiField(label = "Password", type = "text", order = 5)
+    @UiField(label = "Password", type = "password", order = 5)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 

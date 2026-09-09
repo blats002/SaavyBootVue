@@ -39,3 +39,7 @@ node_modules
 dist
 static
 application-development.properties
+
+### Liquibase generated changelogs ###
+*generated-jpa-diff-changelog.xml
+**/generated-jpa-diff-changelog.xml

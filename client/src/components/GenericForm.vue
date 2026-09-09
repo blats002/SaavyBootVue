@@ -7,17 +7,20 @@ import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
 import Calendar from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
+import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import AuthService from '../service/AuthService';
 
 import FileUpload from 'primevue/fileupload';
 import Image from 'primevue/image';
+import Avatar from 'primevue/avatar';
 
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import { FilterMatchMode } from 'primevue/api';
 import GenericCrud from './GenericCrud.vue';
+import GenericQRCode from './GenericQRCode.vue';
 
 const props = defineProps({
     fields: {
@@ -288,6 +291,27 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
   reader.readAsDataURL(file);
 };
 
+const onBaseFileSelect = (event, fieldName) => {
+  const file = event.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const existing = props.modelValue[fieldName] || {};
+    updateField(fieldName, {
+      id: typeof existing === 'object' ? existing.id : null,
+      fileName: file.name,
+      contentType: file.type || 'application/octet-stream',
+      content: reader.result
+    });
+  };
+  reader.readAsDataURL(file);
+};
+
+const clearBaseFile = (fieldName) => {
+  updateField(fieldName, null);
+};
+
 </script>
 
 <template>
@@ -303,6 +327,22 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
         <div v-else-if="field.type === 'text'" class="field">
             <label :for="field.name">{{ field.label }}</label>
             <InputText :id="field.name" :modelValue="modelValue[field.name]" :class="{ 'p-invalid': hasFieldError(field) }" @update:modelValue="updateField(field.name, $event)" />
+            <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
+        </div>
+
+        <div v-else-if="field.type === 'password'" class="field">
+            <label :for="field.name">{{ field.label }}</label>
+            <Password
+                :id="field.name"
+                :modelValue="modelValue[field.name]"
+                :placeholder="field.placeholder || `Enter ${field.label}`"
+                :toggleMask="true"
+                :feedback="false"
+                class="w-full"
+                inputClass="w-full"
+                :class="{ 'p-invalid': hasFieldError(field) }"
+                @update:modelValue="updateField(field.name, $event)"
+            />
             <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
         </div>
 
@@ -385,43 +425,85 @@ const onFileSelect = (event, fieldName, fileNameField, contentTypeField) => {
             <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
         </div>
 
-      <div v-else-if="field.type === 'image' || field.type === 'file'" class="field">
-        <label :for="field.name">{{ field.label }}</label>
+      <div v-else-if="field.type === 'qrcode' || field.type === 'qrtoken'" class="field">
+            <label :for="field.name">{{ field.label }}</label>
+            <div class="flex flex-column align-items-center mb-3">
+                <div class="bg-white p-2 border-round shadow-1 inline-flex justify-content-center align-items-center">
+                    <GenericQRCode
+                        :value="modelValue[field.name] || ''"
+                        :size="field.qrSize || 140"
+                        :margin="1"
+                    />
+                </div>
+            </div>
+            <InputText
+                :id="field.name"
+                :modelValue="modelValue[field.name]"
+                :placeholder="field.placeholder || `Enter ${field.label}`"
+                :required="field.required"
+                :class="{ 'p-invalid': hasFieldError(field) }"
+                @update:modelValue="updateField(field.name, $event)"
+            />
+            <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
+        </div>
 
-        <!-- Image preview -->
-        <FileUpload
-            :src="modelValue[field.name]"
-            :multiple="false"
-            :fileLimit="1"
-            preview
-            customUpload
-            chooseLabel="Upload File"
-            @select="(e) => onFileSelect(e, field.name, field.fileNameField, field.contentTypeField)"
-        />
+        <div v-else-if="field.type?.toLowerCase() === 'basefile'" class="field">
+            <label :for="field.name" class="font-medium">{{ field.label }}</label>
+            <div class="flex align-items-center gap-3 mt-2">
+                <div class="border-circle overflow-hidden shadow-1 flex justify-content-center align-items-center bg-gray-100 surface-border border-1" style="width: 72px; height: 72px; min-width: 72px;">
+                    <img
+                        v-if="modelValue[field.name]?.content || (typeof modelValue[field.name] === 'string' && modelValue[field.name])"
+                        :src="modelValue[field.name]?.content || modelValue[field.name]"
+                        alt="Avatar Preview"
+                        style="width: 100%; height: 100%; object-fit: cover;"
+                    />
+                    <Avatar v-else icon="pi pi-user" shape="circle" size="xlarge" class="bg-gray-100 text-500" />
+                </div>
 
-<!--        <Image-->
-<!--            v-if="field.type === 'image' && modelValue[field.name]"-->
-<!--            :src="modelValue[field.name]"-->
-<!--            preview-->
-<!--            imageClass="uploaded-image"-->
-<!--            width="250"-->
-<!--        />-->
+                <div class="flex flex-column gap-2 flex-1">
+                    <div class="flex align-items-center gap-2">
+                        <FileUpload
+                            mode="basic"
+                            :auto="true"
+                            customUpload
+                            accept="image/*"
+                            chooseLabel="Choose Photo"
+                            class="p-button-outlined p-button-sm"
+                            @select="(e) => onBaseFileSelect(e, field.name)"
+                        />
+                        <Button
+                            v-if="modelValue[field.name]?.content || (typeof modelValue[field.name] === 'string' && modelValue[field.name])"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            text
+                            class="p-button-sm p-button-rounded"
+                            v-tooltip.top="'Remove Photo'"
+                            @click="clearBaseFile(field.name)"
+                        />
+                    </div>
+                    <small v-if="modelValue[field.name]?.fileName" class="text-500 font-italic">
+                        {{ modelValue[field.name].fileName }}
+                    </small>
+                </div>
+            </div>
+            <small v-if="hasFieldError(field)" class="p-invalid"> {{ field.label }} is required. </small>
+        </div>
 
-<!--        <Button-->
-<!--            v-if="field.type === 'file'"-->
-<!--            icon="pi pi-image"-->
-<!--            label="Download"-->
-<!--            link-->
-<!--            @click="downloadFile(-->
-<!--                                  slotProps.data.content,-->
-<!--                                  slotProps.data.fileName-->
-<!--                              )"-->
-<!--        />-->
-
-        <small v-if="hasFieldError(field)" class="p-invalid">
-          {{ field.label }} is required.
-        </small>
-      </div>
+        <div v-else-if="field.type === 'image' || field.type === 'file'" class="field">
+            <label :for="field.name">{{ field.label }}</label>
+            <FileUpload
+                :src="modelValue[field.name]"
+                :multiple="false"
+                :fileLimit="1"
+                preview
+                customUpload
+                chooseLabel="Upload File"
+                @select="(e) => onFileSelect(e, field.name, field.fileNameField, field.contentTypeField)"
+            />
+            <small v-if="hasFieldError(field)" class="p-invalid">
+                {{ field.label }} is required.
+            </small>
+        </div>
     </template>
     <Dialog v-model:visible="relationshipDialogVisible" :header="relationshipDialogField ? `Select ${relationshipDialogField.label}` : 'Select Record'" :modal="true" class="p-fluid" :style="{ width: '700px' }">
         <GenericCrud :showToolbar="true" title="" dialogHeader="" :fields="relationshipDialogField?.optionsFields" :service="relationshipDialogField?.optionsService" @record-selected="rowSelectRelationshipRecord" />

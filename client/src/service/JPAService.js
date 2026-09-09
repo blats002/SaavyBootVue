@@ -15,13 +15,17 @@ axios.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Redirect to login on 401 Unauthorized
+// Redirect to login on 401 Unauthorized (only for authenticated routes)
 axios.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
             AuthService.logout();
-            if (window.location.pathname !== '/auth/login') {
+            const publicRoutes = ['/auth/login', '/bundy-clock', '/landing', '/auth/access', '/auth/error', '/pages/notfound'];
+            const currentPath = window.location.pathname;
+            const isPublicPage = publicRoutes.some((p) => currentPath === p || currentPath.startsWith(p + '/'));
+
+            if (!isPublicPage && currentPath !== '/auth/login') {
                 window.location.href = '/auth/login';
             }
         }
@@ -151,6 +155,7 @@ function createEmptyRecord(fields) {
     fields.forEach(field => {
         switch (field.type) {
             case "text":
+            case "password":
                 record[field.name] = "";
                 break;
             case "number":

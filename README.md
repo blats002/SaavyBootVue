@@ -151,9 +151,14 @@ The Vite dev server will start on **`http://localhost:5173`** (or `http://localh
 Open your browser to `http://localhost:5173` (or the URL printed by Vite).
 
 **Default Login Credentials:**
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Roles**: `ROLE_ADMIN`
+- **Admin**:
+  - **Username**: `admin`
+  - **Password**: `admin123`
+  - **Roles**: `ROLE_ADMIN`
+- **Standard User**:
+  - **Username**: `user`
+  - **Password**: `user123`
+  - **Roles**: `ROLE_USER`
 
 ---
 
