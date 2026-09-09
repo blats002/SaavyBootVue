@@ -3,38 +3,20 @@ services:
     image: postgres:latest
     container_name: saavy_boot_postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: saavy_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-saavy_db}
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-#      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - saavy_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-#  keycloak:
-#    image: quay.io/keycloak/keycloak:latest
-#    container_name: keycloak
-#    command: start-dev
-#    environment:
-#      KC_DB: postgres
-#      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
-#      KC_DB_USERNAME: keycloak
-#      KC_DB_PASSWORD: secret
-#
-#      KEYCLOAK_ADMIN: admin
-#      KEYCLOAK_ADMIN_PASSWORD: admin
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      - postgres
 
   app:
     build:
@@ -42,12 +24,12 @@ services:
       dockerfile: server/DockerFile
     container_name: saavy_boot_app
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/saavy_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      APP_CORS_ALLOWED_ORIGINS: http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-saavy_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-password}
+      APP_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,3 +42,4 @@ volumes:
 networks:
   saavy_network:
     driver: bridge
+

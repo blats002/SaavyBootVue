@@ -5,7 +5,9 @@ import { getPluginRoutes, getPluginDashboard } from '../plugins/pluginLoader';
 import { pluginState } from '../plugins/pluginState';
 
 export function createSaavyRouter(config = {}) {
-    const customRoutes = [...getPluginRoutes(), ...(config.routes || [])];
+    const allPluginRoutes = [...getPluginRoutes(), ...(config.routes || [])];
+    const standardRoutes = allPluginRoutes.filter(r => !r.meta?.standalone);
+    const standaloneRoutes = allPluginRoutes.filter(r => r.meta?.standalone);
     const dashboardComponent = config.dashboard || getPluginDashboard() || (() => import('../views/Dashboard.vue'));
 
     const baseChildren = [
@@ -29,7 +31,7 @@ export function createSaavyRouter(config = {}) {
             name: 'plugins',
             component: () => import('../views/pages/PluginManagement.vue')
         },
-        ...customRoutes
+        ...standardRoutes
     ];
 
     const router = createRouter({
@@ -64,14 +66,20 @@ export function createSaavyRouter(config = {}) {
                 path: '/auth/error',
                 name: 'error',
                 component: () => import('../views/pages/auth/Error.vue')
-            }
+            },
+            ...standaloneRoutes
         ]
     });
 
     // Navigation guard for authenticated routes
     router.beforeEach(async (to, from, next) => {
-        const publicPages = ['/auth/login', '/landing', '/pages/notfound', '/auth/access', '/auth/error'];
-        const authRequired = !publicPages.includes(to.path);
+        const publicPages = ['/auth/login', '/landing', '/pages/notfound', '/auth/access', '/auth/error', '/bundy-clock'];
+        const isPublic =
+            publicPages.some((p) => to.path === p || to.path.startsWith(p + '/')) ||
+            to.meta?.public === true ||
+            to.meta?.standalone === true ||
+            to.matched.some((r) => r.meta?.public === true || r.meta?.standalone === true);
+        const authRequired = !isPublic;
         const loggedIn = AuthService.isAuthenticated();
 
         if (authRequired && !loggedIn) {
@@ -91,7 +99,7 @@ export function createSaavyRouter(config = {}) {
         }
 
         // Check if route belongs to a disabled plugin
-        if (to.meta && to.meta.pluginName) {
+        if (to.meta && to.meta.pluginName && loggedIn) {
             if (!pluginState.isPluginEnabled(to.meta.pluginName)) {
                 return next('/pages/notfound');
             }

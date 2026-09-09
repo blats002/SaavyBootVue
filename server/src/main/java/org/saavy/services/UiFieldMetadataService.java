@@ -6,6 +6,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import org.saavy.component.*;
 import org.saavy.entity.*;
+import org.saavy.reference.EnumUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -120,6 +121,13 @@ public class UiFieldMetadataService {
             required = true;
         }
 
+        String enumOptions = uiField.enumOptions();
+        if ((enumOptions == null || enumOptions.isBlank()) && field.getType().isEnum()) {
+            @SuppressWarnings("unchecked")
+            Class<? extends Enum<?>> enumClass = (Class<? extends Enum<?>>) field.getType();
+            enumOptions = EnumUtils.toJson(enumClass);
+        }
+
         return new UiFieldMetadata(
                 field.getName(),
                 uiField.label().isBlank() ? toLabel(field.getName()) : uiField.label(),
@@ -132,7 +140,7 @@ public class UiFieldMetadataService {
                 uiField.optionLabel(),
                 uiField.optionValue(),
                 uiField.optionsEndpoint(),
-                uiField.enumOptions(),
+                enumOptions,
                 uiField.fileNameField(),
                 uiField.contentTypeField()
         );

@@ -38,6 +38,7 @@ public class UserRoleDTO implements Serializable {
             optionsEndpoint = "users",
             hidden = true
     )
+    @JsonBackReference
     private UserDTO user;
 
     @UiField(

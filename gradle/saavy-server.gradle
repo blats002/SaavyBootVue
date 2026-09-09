@@ -57,6 +57,14 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = 'full'
+    }
 }
 
 tasks.register('cleanFrontEnd', Delete) {
@@ -132,6 +140,10 @@ tasks.register('bootRunDebug', JavaExec) {
     ]
 }
 
+bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 gradle.projectsEvaluated {
     rootProject.subprojects.findAll { it.path.startsWith(':plugins:') && it.path.endsWith(':server') }.each { pluginProj ->
         tasks.named('bootRun').configure {
@@ -141,6 +153,12 @@ gradle.projectsEvaluated {
         tasks.named('bootRunDebug').configure {
             dependsOn pluginProj.tasks.matching { it.name == 'classes' }
             classpath += pluginProj.sourceSets.main.output
+        }
+        tasks.named('bootJar').configure {
+            dependsOn pluginProj.tasks.matching { it.name == 'classes' }
+            from(pluginProj.sourceSets.main.output) {
+                into 'BOOT-INF/classes'
+            }
         }
     }
 }

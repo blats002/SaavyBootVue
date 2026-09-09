@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- 1. Employee Badges Table -->
+    <changeSet author="ramil.saavedra" id="attendance-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="employee_badges"/>
+            </not>
+        </preConditions>
+        <createTable tableName="employee_badges">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="employeeBadgesPK"/>
+            </column>
+            <column name="employee_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employee_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="department" type="VARCHAR(100)"/>
+            <column name="job_title" type="VARCHAR(100)"/>
+            <column name="qr_token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_employee_badges_qr_token"/>
+            </column>
+            <column name="pin_code" type="VARCHAR(20)"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- 2. Attendance Logs Table -->
+    <changeSet author="ramil.saavedra" id="attendance-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="attendance_logs"/>
+            </not>
+        </preConditions>
+        <createTable tableName="attendance_logs">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="attendanceLogsPK"/>
+            </column>
+            <column name="employee_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employee_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="department" type="VARCHAR(100)"/>
+            <column name="log_timestamp" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="log_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="verification_method" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(30)"/>
+            <column name="kiosk_device_id" type="VARCHAR(100)"/>
+            <column name="notes" type="LONGTEXT"/>
+        </createTable>
+    </changeSet>
+
+    <!-- 5. Avatar Files Table -->
+    <changeSet author="ramil.saavedra" id="attendance-5-avatar-files">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="avatar_files"/>
+            </not>
+        </preConditions>
+        <createTable tableName="avatar_files">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="avatarFilesPK"/>
+            </column>
+            <column name="file_name" type="VARCHAR(255)"/>
+            <column name="content_type" type="VARCHAR(100)"/>
+            <column name="content" type="LONGTEXT"/>
+        </createTable>
+    </changeSet>
+
+    <!-- 6. Add avatar_file_id Column to Employee Badges -->
+    <changeSet author="ramil.saavedra" id="attendance-6-badge-avatar-fk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="employee_badges" columnName="avatar_file_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="employee_badges">
+            <column name="avatar_file_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="employee_badges"
+                                 baseColumnNames="avatar_file_id"
+                                 constraintName="fk_employee_badges_avatar_file"
+                                 referencedTableName="avatar_files"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

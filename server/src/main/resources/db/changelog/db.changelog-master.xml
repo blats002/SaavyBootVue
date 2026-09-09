@@ -74,6 +74,20 @@
             <column name="role_id" valueNumeric="1"/>
         </insert>
     </changeSet>
+    <changeSet author="saavy" id="security-seed-003">
+        <insert tableName="users">
+            <column name="username" value="user"/>
+            <!-- password is user123 (BCrypt encoded) -->
+            <column name="password" value="$2a$10$uQc8w5Rf8nXWlIha5xC/Iu2MBIFbM9/HrlVC.dTdx9vn6Qqsed3AG"/>
+            <column name="email" value="user@example.com"/>
+            <column name="full_name" value="Standard User"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="user_roles">
+            <column name="user_id" valueComputed="(SELECT id FROM users WHERE username = 'user')"/>
+            <column name="role_id" valueComputed="(SELECT id FROM roles WHERE name = 'ROLE_USER')"/>
+        </insert>
+    </changeSet>
     <changeSet author="saavy" id="plugin-config-001">
         <createTable tableName="plugin_config">
             <column autoIncrement="true" name="id" type="BIGINT">

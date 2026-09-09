@@ -42,8 +42,6 @@ const showError = () => {
         <div class="col-12 lg:col-6">
             <div class="card">
                 <h5>Toast</h5>
-
-                <Toast />
                 <Button @click="showSuccess()" label="Success" class="p-button-success mr-2" />
                 <Button @click="showInfo()" label="Info" class="p-button-info mr-2" />
                 <Button @click="showWarn()" label="Warn" class="p-button-warning mr-2" />

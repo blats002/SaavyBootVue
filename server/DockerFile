@@ -1,8 +1,17 @@
 FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
+
+# Install Node.js (v20.x) and npm for frontend bundling during bootJar
+RUN apt-get update && apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY . .
-RUN chmod +x ./server/gradlew
-RUN ./server/gradlew bootJar --no-daemon
+RUN sed -i 's/\r$//' ./gradlew ./server/gradlew 2>/dev/null || true && \
+    chmod +x ./gradlew ./server/gradlew
+RUN cd client && npm install
+RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-jammy
 

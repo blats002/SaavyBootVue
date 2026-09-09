@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <!-- 1. Seed Demo Employee Badges -->
+    <changeSet author="ramil.saavedra" id="attendance-seed-badges" context="dev,demo,test">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM employee_badges</sqlCheck>
+        </preConditions>
+        <insert tableName="employee_badges">
+            <column name="employee_id" value="EMP-001"/>
+            <column name="employee_name" value="John Doe"/>
+            <column name="department" value="Engineering"/>
+            <column name="job_title" value="Lead Software Architect"/>
+            <column name="qr_token" value="QR-EMP-001-JOHNDOE"/>
+            <column name="pin_code" value="1234"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="employee_badges">
+            <column name="employee_id" value="EMP-002"/>
+            <column name="employee_name" value="Jane Smith"/>
+            <column name="department" value="Product &amp; UI/UX"/>
+            <column name="job_title" value="Product Director"/>
+            <column name="qr_token" value="QR-EMP-002-JANESMITH"/>
+            <column name="pin_code" value="2345"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="employee_badges">
+            <column name="employee_id" value="EMP-003"/>
+            <column name="employee_name" value="Carlos Vance"/>
+            <column name="department" value="Operations"/>
+            <column name="job_title" value="Operations Manager"/>
+            <column name="qr_token" value="QR-EMP-003-CARLOSVANCE"/>
+            <column name="pin_code" value="3456"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="employee_badges">
+            <column name="employee_id" value="EMP-004"/>
+            <column name="employee_name" value="Emily Chen"/>
+            <column name="department" value="Finance"/>
+            <column name="job_title" value="Senior Financial Analyst"/>
+            <column name="qr_token" value="QR-EMP-004-EMILYCHEN"/>
+            <column name="pin_code" value="4567"/>
+            <column name="is_active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+            <!-- 4. Seed Initial Sample Attendance Logs -->
+    <changeSet author="ramil.saavedra" id="attendance-seed-logs" context="dev,demo,test">
+    <preConditions onFail="MARK_RAN">
+        <sqlCheck expectedResult="0">SELECT COUNT(*) FROM attendance_logs</sqlCheck>
+    </preConditions>
+    <insert tableName="attendance_logs">
+        <column name="employee_id" value="EMP-001"/>
+        <column name="employee_name" value="John Doe"/>
+        <column name="department" value="Engineering"/>
+        <column name="log_timestamp" valueComputed="CURRENT_TIMESTAMP"/>
+        <column name="log_type" value="CLOCK_IN"/>
+        <column name="verification_method" value="QR_CODE"/>
+        <column name="status" value="ON_TIME"/>
+        <column name="kiosk_device_id" value="Kiosk-Lobby-Tablet-01"/>
+        <column name="notes" value="Punched in via QR badge"/>
+    </insert>
+    <insert tableName="attendance_logs">
+        <column name="employee_id" value="EMP-002"/>
+        <column name="employee_name" value="Jane Smith"/>
+        <column name="department" value="Product &amp; UI/UX"/>
+        <column name="log_timestamp" valueComputed="CURRENT_TIMESTAMP"/>
+        <column name="log_type" value="CLOCK_IN"/>
+        <column name="verification_method" value="QR_CODE"/>
+        <column name="status" value="ON_TIME"/>
+        <column name="kiosk_device_id" value="Kiosk-Lobby-Tablet-01"/>
+        <column name="notes" value="Punched in via QR badge"/>
+    </insert>
+    <insert tableName="attendance_logs">
+        <column name="employee_id" value="EMP-003"/>
+        <column name="employee_name" value="Carlos Vance"/>
+        <column name="department" value="Operations"/>
+        <column name="log_timestamp" valueComputed="CURRENT_TIMESTAMP"/>
+        <column name="log_type" value="CLOCK_IN"/>
+        <column name="verification_method" value="PIN"/>
+        <column name="status" value="LATE"/>
+        <column name="kiosk_device_id" value="Kiosk-Lobby-Tablet-01"/>
+        <column name="notes" value="Punched in via PIN entry"/>
+    </insert>
+    </changeSet>
+</databaseChangeLog>

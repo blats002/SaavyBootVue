@@ -32,23 +32,43 @@ dependencies {
     // Lombok annotations & processor
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 
     // Reference the host core server module
     compileOnly project(':server')
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.modelmapper:modelmapper:3.1.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation project(':server')
 }
 
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = true
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = 'full'
+    }
 }
 
-// ============================================================================
-// Plugin Liquibase Diff Changelog Generation Task
-// ============================================================================
 def pluginName = project.parent != null ? project.parent.name : project.name
+
+base {
+    archivesName = pluginName
+}
+
+tasks.named('jar') {
+    archiveBaseName = pluginName
+}
+
 def pluginChangelogDir = "${rootProject.projectDir}/plugins/db/changelog/${pluginName}"
 def pluginDiffFile = "${pluginChangelogDir}/${pluginName}-diff-changelog.xml"
 
