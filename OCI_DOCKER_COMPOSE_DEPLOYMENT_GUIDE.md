@@ -4,32 +4,39 @@ This guide explains how to deploy this project to an Oracle Cloud Infrastructure
 
 ---
 
-## ⚡ Quick Start: 1-Command Automated Deployment
+## ⚡ Quick Start: Automated OCI Setup & Deployment
 
-If you already have an Ubuntu OCI Compute instance running:
+### Step 1: Ready the OCI Instance (One-Line Setup)
+
+Once you SSH into your fresh Ubuntu OCI instance (`ssh ubuntu@YOUR_OCI_PUBLIC_IP`), run this one-liner to ready the entire instance:
 
 ```bash
-# 1. Connect to your OCI instance
-ssh ubuntu@YOUR_OCI_PUBLIC_IP
+curl -sSL https://raw.githubusercontent.com/blats002/SaavyBootVue/uss-enterprise/scripts/setup-oci.sh | bash
+```
 
-# 2. Clone the repository
+> **What `setup-oci.sh` does in ~60 seconds:**
+> - 📦 System update & installs **Docker**, **Docker Compose plugin**, **Git**, **curl**, **jq**, **htop**.
+> - 👤 Adds user `ubuntu` to `docker` group (no `sudo` required for Docker commands).
+> - 💾 Automatically provisions **2GB Swapfile** (crucial to prevent OOM errors on OCI Free Tier 1GB AMD shapes).
+> - 🛡️ Automatically configures **OCI OS firewall** (`iptables` & `ufw`) to accept incoming traffic on ports `8080`, `80`, and `443`.
+
+---
+
+### Step 2: Clone & Deploy the Application
+
+After the instance is readied, deploy the full application:
+
+```bash
+# 1. Clone the repository
 git clone https://github.com/blats002/SaavyBootVue.git
 cd SaavyBootVue
 
-# 3. Run the automated deployment script
+# 2. Run the deployment script
 chmod +x scripts/deploy-oci.sh
 ./scripts/deploy-oci.sh
 ```
 
-### What the script automatically handles:
-- 📦 Installs **Docker**, **Docker Compose plugin**, and **Git** if missing.
-- 🛡️ Automatically configures the **OCI OS firewall** (`iptables` & `ufw`) to accept incoming traffic on port `8080`.
-- 💾 Auto-configures **2GB Swap space** on low-RAM shapes (e.g. 1GB AMD Micro) to prevent build out-of-memory errors.
-- 🔐 Creates `.env` with secure credentials if one does not exist.
-- 🚀 Builds the full stack (Vue frontend + Spring Boot + PostgreSQL) with `docker compose up --build -d`.
-- 🩺 Polls for container health and outputs the accessible web URL and default credentials.
-
-### Useful Subcommands:
+### Useful Management Commands:
 ```bash
 ./scripts/deploy-oci.sh --logs      # Stream live container logs
 ./scripts/deploy-oci.sh --update    # Pull latest Git changes and redeploy
@@ -38,6 +45,7 @@ chmod +x scripts/deploy-oci.sh
 ./scripts/deploy-oci.sh --stop      # Stop all containers
 ./scripts/deploy-oci.sh --reset-db  # Reset database & volumes
 ```
+
 
 ---
 
