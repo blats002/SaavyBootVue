@@ -2,11 +2,42 @@
 
 This guide explains how to deploy this project to an Oracle Cloud Infrastructure (OCI) Compute instance using Docker Compose.
 
-The deployment will run:
+---
 
-- **PostgreSQL** in a Docker container
-- **Spring Boot application** (with bundled Vue frontend) in a Docker container
-- Both services connected through Docker Compose internal networking
+## ⚡ Quick Start: 1-Command Automated Deployment
+
+If you already have an Ubuntu OCI Compute instance running:
+
+```bash
+# 1. Connect to your OCI instance
+ssh ubuntu@YOUR_OCI_PUBLIC_IP
+
+# 2. Clone the repository
+git clone https://github.com/blats002/SaavyBootVue.git
+cd SaavyBootVue
+
+# 3. Run the automated deployment script
+chmod +x scripts/deploy-oci.sh
+./scripts/deploy-oci.sh
+```
+
+### What the script automatically handles:
+- 📦 Installs **Docker**, **Docker Compose plugin**, and **Git** if missing.
+- 🛡️ Automatically configures the **OCI OS firewall** (`iptables` & `ufw`) to accept incoming traffic on port `8080`.
+- 💾 Auto-configures **2GB Swap space** on low-RAM shapes (e.g. 1GB AMD Micro) to prevent build out-of-memory errors.
+- 🔐 Creates `.env` with secure credentials if one does not exist.
+- 🚀 Builds the full stack (Vue frontend + Spring Boot + PostgreSQL) with `docker compose up --build -d`.
+- 🩺 Polls for container health and outputs the accessible web URL and default credentials.
+
+### Useful Subcommands:
+```bash
+./scripts/deploy-oci.sh --logs      # Stream live container logs
+./scripts/deploy-oci.sh --update    # Pull latest Git changes and redeploy
+./scripts/deploy-oci.sh --status    # Check running container status
+./scripts/deploy-oci.sh --restart   # Restart all services
+./scripts/deploy-oci.sh --stop      # Stop all containers
+./scripts/deploy-oci.sh --reset-db  # Reset database & volumes
+```
 
 ---
 
@@ -16,10 +47,11 @@ The project includes a Docker Compose setup with two services:
 
 | Service | Purpose | Exposed Port |
 |---|---|---|
-| `postgres` | PostgreSQL database | `5432` (optional) |
+| `postgres` | PostgreSQL database | `5432` (internal) |
 | `app` | Spring Boot application + Vue frontend | `8080` |
 
 The application will be available at: `http://YOUR_OCI_PUBLIC_IP:8080`
+
 
 ---
 
