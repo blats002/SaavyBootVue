@@ -170,6 +170,7 @@ Open your browser to `http://localhost:5173` (or the URL printed by Vite).
 2. **Runtime Classpath Injection**: `gradle/saavy-server.gradle` dynamically attaches all plugin subprojects to `server` as `runtimeOnly` dependencies.
 3. **Spring Component & Entity Scanning**: The host application's `@SpringBootApplication` scans `org.saavy.*`. Any beans (`@Service`, `@RestController`, `@Component`) and JPA entities (`@Entity`) inside plugin modules are automatically wired.
 4. **Liquibase Migration Inclusion**: `db.changelog-master.xml` includes `<includeAll path="db/changelog/plugins" errorIfMissingOrEmpty="false"/>`, executing all XML changelogs found in plugin resource paths.
+5. **Plugin Self-Registration & Management**: `PluginConfigService` scans for all `classpath*:plugin.properties` files during `@PostConstruct`. It automatically populates or updates the plugin's metadata in the `plugin_config` table, allowing the plugin to be viewed and toggled enabled/disabled in the **Plugin Management** page (`/pages/plugins`).
 
 ### Frontend Auto-Discovery
 
@@ -183,30 +184,35 @@ Open your browser to `http://localhost:5173` (or the URL printed by Vite).
 
 ### Metadata-Driven Generic UI
 
-Instead of creating manual forms, tables, and dialogs from scratch, you can decorate backend entities with UI annotations:
+Instead of creating manual forms, tables, and dialogs from scratch, you can decorate backend Data Transfer Objects (DTOs) with UI annotations:
 
 ```java
-@Entity
-@Table(name = "sample_item")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @UiMaster(
     title = "Sample Items",
     dialogHeader = "Sample Item Details",
     optionLabel = "name",
+    messages = "{\"created\":\"Sample Item Created\",\"updated\":\"Sample Item Updated\",\"deleted\":\"Sample Item Deleted\"}",
     masterEndPoint = "sample-items"
 )
-public class SampleItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class SampleItemDTO implements Serializable {
+
     @UiField(label = "ID", type = "number", hidden = true, editable = false, order = 1)
     private Long id;
 
-    @Column(nullable = false)
     @UiField(label = "Name", type = "text", required = true, sortable = true, order = 2)
     private String name;
 
-    @Column
-    @UiField(label = "Price", type = "number", required = true, sortable = true, order = 3)
+    @UiField(label = "Description", type = "text", sortable = true, order = 3)
+    private String description;
+
+    @UiField(label = "Price", type = "number", required = true, sortable = true, order = 4)
     private double price;
+
+    @UiField(label = "Active", type = "checkbox", sortable = true, order = 5)
+    private Boolean active = true;
 }
 ```
 
@@ -235,7 +241,8 @@ plugins/
         └── src/main/
             ├── java/org/saavy/
             │   ├── config/
-            │   │   └── InventoryEntityRegistryProvider.java
+            │   │   ├── InventoryEntityRegistryProvider.java
+            │   │   └── InventoryPluginConfiguration.java
             │   ├── controllers/
             │   │   └── InventoryItemController.java
             │   ├── entity/
@@ -245,6 +252,9 @@ plugins/
             │   └── services/
             │       └── InventoryItemService.java
             └── resources/
+                ├── META-INF/spring/
+                │   └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+                ├── plugin.properties
                 └── db/changelog/plugins/
                     └── 02-inventory-plugin-changelog.xml
 ```
@@ -266,13 +276,47 @@ package org.saavy.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.saavy.component.UiField;
-import org.saavy.component.UiMaster;
 
 @Entity
 @Table(name = "inventory_item")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class InventoryItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String sku;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(nullable = false)
+    private Double unitPrice;
+}
+```
+
+#### 3. DTO with UI Annotations (`plugins/inventory-plugin/server/src/main/java/org/saavy/entity/InventoryItemDTO.java`)
+
+```java
+package org.saavy.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.saavy.component.UiField;
+import org.saavy.component.UiMaster;
+
+import java.io.Serializable;
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @UiMaster(
@@ -282,46 +326,21 @@ import org.saavy.component.UiMaster;
     messages = "{\"created\":\"Inventory Item Created\",\"updated\":\"Inventory Item Updated\",\"deleted\":\"Inventory Item Deleted\"}",
     masterEndPoint = "inventory-items"
 )
-public class InventoryItem {
+public class InventoryItemDTO implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @UiField(label = "ID", type = "number", hidden = true, editable = false, order = 1)
     private Long id;
 
-    @Column(nullable = false, unique = true)
     @UiField(label = "SKU Code", type = "text", required = true, sortable = true, order = 2)
     private String sku;
 
-    @Column(nullable = false)
     @UiField(label = "Item Name", type = "text", required = true, sortable = true, order = 3)
     private String name;
 
-    @Column(nullable = false)
     @UiField(label = "Quantity", type = "number", required = true, sortable = true, order = 4)
     private Integer quantity;
 
-    @Column(nullable = false)
     @UiField(label = "Unit Price", type = "number", required = true, sortable = true, order = 5)
-    private Double unitPrice;
-}
-```
-
-#### 3. DTO (`plugins/inventory-plugin/server/src/main/java/org/saavy/entity/InventoryItemDTO.java`)
-
-```java
-package org.saavy.entity;
-
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class InventoryItemDTO {
-    private Long id;
-    private String sku;
-    private String name;
-    private Integer quantity;
     private Double unitPrice;
 }
 ```
@@ -393,7 +412,7 @@ public class InventoryItemController extends BaseController<InventoryItem, Inven
 package org.saavy.config;
 
 import org.saavy.component.EntityRegistryProvider;
-import org.saavy.entity.InventoryItem;
+import org.saavy.entity.InventoryItemDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -404,11 +423,53 @@ public class InventoryEntityRegistryProvider implements EntityRegistryProvider {
     @Override
     public Map<String, Class<?>> getEntities() {
         return Map.ofEntries(
-            Map.entry("inventory-items", InventoryItem.class)
+            Map.entry("inventory-items", InventoryItemDTO.class)
         );
     }
 }
 ```
+
+#### 8. Spring Boot AutoConfiguration (`plugins/inventory-plugin/server/src/main/java/org/saavy/config/InventoryPluginConfiguration.java`)
+
+```java
+package org.saavy.config;
+
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class InventoryPluginConfiguration {
+}
+```
+
+Register this configuration class in `plugins/inventory-plugin/server/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`:
+
+```text
+org.saavy.config.InventoryPluginConfiguration
+```
+
+#### 9. Plugin Properties & Self-Registration (`plugins/inventory-plugin/server/src/main/resources/plugin.properties`)
+
+Every plugin module **must** declare a `plugin.properties` file in its `server/src/main/resources/` root. 
+
+During application startup, [`PluginConfigService`](file:///d:/Workspace/MY_PROJ/SaavyBootVue/server/src/main/java/org/saavy/services/PluginConfigService.java) automatically scans `classpath*:plugin.properties` and registers or updates the plugin in the `plugin_config` table. This allows system administrators to manage and toggle the plugin on or off via the **Plugin Management** page (`/pages/plugins`).
+
+```properties
+plugin.name=inventory-plugin
+plugin.displayName=Inventory Management Plugin
+plugin.dashboardTitle=Inventory Dashboard
+plugin.description=Track warehouse inventory items, stock levels, and unit prices.
+plugin.version=1.0.0
+```
+
+**Property Breakdown:**
+
+| Property | Description | Example |
+|---|---|---|
+| `plugin.name` | **Required.** Unique slug identifier. Must match the `name` exported in `client/src/index.js` so frontend state toggling stays synchronized. | `inventory-plugin` |
+| `plugin.displayName` | Human-friendly name displayed in the **Plugin Management** table and UI headings. | `Inventory Management Plugin` |
+| `plugin.dashboardTitle` | Title displayed when the plugin is pinned to or rendered on the dashboard. | `Inventory Dashboard` |
+| `plugin.description` | Summary description of features provided by the plugin. | `Track warehouse inventory items, stock levels, and unit prices.` |
+| `plugin.version` | Semantic version of the plugin. | `1.0.0` |
 
 ---
 

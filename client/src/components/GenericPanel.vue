@@ -109,10 +109,12 @@ const isRoleAuthorized = computed(() => {
 
 const emit = defineEmits(['button-click']);
 
-const handleButtonClick = (button, section) => {
+const handleButtonClick = (button, section, event) => {
   emit('button-click', {
     ...button,
-    section
+    section,
+    originalEvent: event,
+    event
   });
 };
 </script>
@@ -144,7 +146,7 @@ const handleButtonClick = (button, section) => {
               :text="button.text"
               :rounded="button.rounded"
               size="small"
-              @click="handleButtonClick(button, 'left')"
+              @click="(e) => handleButtonClick(button, 'left', e)"
           />
         </div>
       </template>
@@ -163,7 +165,7 @@ const handleButtonClick = (button, section) => {
               :text="button.text"
               :rounded="button.rounded"
               size="small"
-              @click="handleButtonClick(button, 'right')"
+              @click="(e) => handleButtonClick(button, 'right', e)"
           />
         </div>
       </template>

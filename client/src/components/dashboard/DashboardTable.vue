@@ -51,9 +51,11 @@ const isRoleAuthorized = computed(() => {
     return AuthService.hasRole(props.role);
 });
 
-const formatCurrency = (val) => {
+const formatCurrency = (val, currencyCode = 'USD') => {
     if (val === null || val === undefined || isNaN(val)) return '-';
-    return Number(val).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    const curr = currencyCode || 'USD';
+    const locale = curr === 'PHP' ? 'en-PH' : curr === 'EUR' ? 'de-DE' : curr === 'GBP' ? 'en-GB' : curr === 'JPY' ? 'ja-JP' : 'en-US';
+    return Number(val).toLocaleString(locale, { style: 'currency', currency: curr });
 };
 
 const formatDate = (val) => {
@@ -115,7 +117,7 @@ const handleActionClick = () => {
                 <template #body="slotProps">
                     <!-- Currency Formatter -->
                     <template v-if="col.type === 'currency'">
-                        {{ formatCurrency(slotProps.data[col.field]) }}
+                        {{ formatCurrency(slotProps.data[col.field], col.currency || col.currencyCode || slotProps.data.currency) }}
                     </template>
 
                     <!-- Status Badge Formatter -->

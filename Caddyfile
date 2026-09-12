@@ -1,0 +1,30 @@
+# ==============================================================================
+# Caddyfile - Automatic HTTPS Reverse Proxy Configuration for SaavyBootVue
+# ==============================================================================
+# 
+# Supported Domain Configurations:
+#
+# 1. Custom Domain / DuckDNS / sslip.io (Automatic Trusted Let's Encrypt SSL):
+#      Replace `{$DOMAIN:localhost}` in your .env or specify directly below:
+#      e.g., saavy-app.duckdns.org OR 129-153-45-67.sslip.io OR myapp.com
+#
+# 2. Local / Development Testing:
+#      Defaults to `http://localhost` if no DOMAIN variable is set.
+# ==============================================================================
+
+{$DOMAIN:localhost} {
+    # Optional email for Let's Encrypt renewal notices (defined in .env)
+    email {$SSL_EMAIL:admin@example.com}
+
+    # Enable Gzip / Zstandard compression for static assets and API responses
+    encode zstd gzip
+
+    # Reverse proxy all incoming traffic to the internal Spring Boot container
+    reverse_proxy app:8080 {
+        # Pass standard proxy headers to Spring Boot
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

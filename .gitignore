@@ -43,3 +43,9 @@ application-development.properties
 ### Liquibase generated changelogs ###
 *generated-jpa-diff-changelog.xml
 **/generated-jpa-diff-changelog.xml
+
+### Environment & Secrets ###
+.env
+.env.*
+!.env.example
+

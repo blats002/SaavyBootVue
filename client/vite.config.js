@@ -30,7 +30,8 @@ export default defineConfig(() => {
                 '@app-config': appConfigPath,
                 'vue': fileURLToPath(new URL('./node_modules/vue', import.meta.url)),
                 'axios': fileURLToPath(new URL('./node_modules/axios', import.meta.url)),
-                'primevue': fileURLToPath(new URL('./node_modules/primevue', import.meta.url))
+                'primevue': fileURLToPath(new URL('./node_modules/primevue', import.meta.url)),
+                'html2canvas': fileURLToPath(new URL('./node_modules/html2canvas', import.meta.url))
             }
         },
         server: {
