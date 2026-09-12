@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Tax Categories Table -->
+    <changeSet author="saavy" id="tax-categories-table-001">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tax_categories"/>
+            </not>
+        </preConditions>
+        <createTable tableName="tax_categories">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tax_categoriesPK"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UC_TAX_CAT_CODE"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(500)"/>
+            <column name="pnl_category" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bir_schedule_line" type="VARCHAR(255)"/>
+            <column name="is_deductible" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="statutory_cap_percent" type="DECIMAL(5, 2)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Vendor Rules Table -->
+    <changeSet author="saavy" id="vendor-rules-table-001">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="vendor_rules"/>
+            </not>
+        </preConditions>
+        <createTable tableName="vendor_rules">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="vendor_rulesPK"/>
+            </column>
+            <column name="pattern" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tax_category_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="tax_category_id" baseTableName="vendor_rules" constraintName="FK_vendor_rules_category" referencedColumnNames="id" referencedTableName="tax_categories"/>
+    </changeSet>
+
+    <!-- Invoices Table Columns Migration for Tax Category & CWT -->
+    <changeSet author="saavy" id="invoices-tax-category-cols-001">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="invoices"/>
+                <not>
+                    <columnExists tableName="invoices" columnName="tax_category_id"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn tableName="invoices">
+            <column name="tax_category_id" type="BIGINT"/>
+            <column name="cwt_2307_amount" type="DECIMAL(38, 2)" defaultValueNumeric="0"/>
+            <column name="vat_status" type="VARCHAR(50)" defaultValue="VAT_INCLUSIVE"/>
+            <column name="is_deductible" type="BOOLEAN" defaultValueBoolean="true"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="tax_category_id" baseTableName="invoices" constraintName="FK_invoices_tax_category" referencedColumnNames="id" referencedTableName="tax_categories"/>
+    </changeSet>
+
+    <!-- Pre-populate 22 Standard BIR Schedule Tax Categories -->
+    <changeSet author="saavy" id="tax-categories-seed-001">
+        <insert tableName="tax_categories">
+            <column name="code" value="REV_GROSS_SALES_GOODS"/>
+            <column name="name" value="Gross Sales of Goods"/>
+            <column name="description" value="Gross sales from trade or business goods"/>
+            <column name="pnl_category" value="REVENUE"/>
+            <column name="bir_schedule_line" value="Gross Sales / Receipts (Part IV Line 1)"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="REV_PROFESSIONAL_SERVICE_FEES"/>
+            <column name="name" value="Professional &amp; Service Fees"/>
+            <column name="description" value="Revenues from services, consultancy, and professional practice"/>
+            <column name="pnl_category" value="REVENUE"/>
+            <column name="bir_schedule_line" value="Gross Sales / Receipts (Part IV Line 1)"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="REV_OTHER_TAXABLE_INCOME"/>
+            <column name="name" value="Other Taxable Business Income"/>
+            <column name="description" value="Incidental income, commissions, interest, or other non-operating gains"/>
+            <column name="pnl_category" value="OTHER_INCOME"/>
+            <column name="bir_schedule_line" value="Other Taxable Income (Part IV Line 4)"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="COGS_DIRECT_MATERIALS"/>
+            <column name="name" value="COGS - Direct Materials &amp; Inventory Purchases"/>
+            <column name="description" value="Raw materials, finished goods inventory, and merchandise for resale"/>
+            <column name="pnl_category" value="COGS"/>
+            <column name="bir_schedule_line" value="Schedule 1 - Direct Materials / Purchases"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="COGS_DIRECT_SALARIES"/>
+            <column name="name" value="COGS - Direct Production Salaries &amp; Labor"/>
+            <column name="description" value="Direct subcontractor, production, and service fulfillment labor"/>
+            <column name="pnl_category" value="COGS"/>
+            <column name="bir_schedule_line" value="Schedule 1 - Direct Salaries / Wages"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="COGS_OTHER_DIRECT_COSTS"/>
+            <column name="name" value="COGS - Other Direct Production Costs"/>
+            <column name="description" value="Manufacturing overhead and direct fulfillment costs"/>
+            <column name="pnl_category" value="COGS"/>
+            <column name="bir_schedule_line" value="Schedule 1 - Other Direct Costs"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_SALARIES_BENEFITS"/>
+            <column name="name" value="OPEX - Salaries, Wages &amp; Employee Benefits"/>
+            <column name="description" value="Staff compensation, 13th month pay, and standard employee allowances"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 1 - Salaries, Wages &amp; Benefits"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_CONTRIBUTIONS_SSS_PHIL_PAGIBIG"/>
+            <column name="name" value="OPEX - SSS, PhilHealth &amp; HDMF Contributions"/>
+            <column name="description" value="Mandatory statutory employer social security &amp; healthcare contributions"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 2 - SSS, GSIS, PhilHealth, HDMF"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_RENTS"/>
+            <column name="name" value="OPEX - Rent (Office, Warehouse, Store)"/>
+            <column name="description" value="Office, warehouse, retail store, and equipment lease payments"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 3 - Rents"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_UTILITIES_COMMUNICATION"/>
+            <column name="name" value="OPEX - Utilities &amp; Communication"/>
+            <column name="description" value="Electricity (Meralco), water, telecom (PLDT/Globe), and internet services"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 4 - Utilities &amp; Communication"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_DEPRECIATION_AMORTIZATION"/>
+            <column name="name" value="OPEX - Depreciation &amp; Amortization"/>
+            <column name="description" value="Wear and tear write-off of machinery, vehicles, computers, and office equipment"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 5 - Depreciation"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_PROFESSIONAL_LEGAL_FEES"/>
+            <column name="name" value="OPEX - Professional, Legal &amp; Accounting Fees"/>
+            <column name="description" value="Bookkeeping, legal retainer, auditor fees, and technical consulting"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 6 - Professional Fees"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_REPRESENTATION_ENTERTAINMENT"/>
+            <column name="name" value="OPEX - Representation &amp; Client Entertainment"/>
+            <column name="description" value="Client meetings, meals, representation (Subject to statutory BIR deduction ceiling)"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 7 - Representation &amp; Entertainment"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="statutory_cap_percent" valueNumeric="0.50"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_TAXES_LICENSES"/>
+            <column name="name" value="OPEX - Taxes &amp; Licenses"/>
+            <column name="description" value="Mayor's permit, DTI/SEC renewal, barangay clearance, documentary stamp tax"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 8 - Taxes and Licenses"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_ADVERTISING_PROMOTION"/>
+            <column name="name" value="OPEX - Advertising &amp; Promotions"/>
+            <column name="description" value="Online ads (Meta/Google), print media, billboards, PR, and promotional campaigns"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 9 - Advertising"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_OFFICE_SUPPLIES"/>
+            <column name="name" value="OPEX - Office Supplies &amp; Postage"/>
+            <column name="description" value="Paper, printer toner, stationery, postage, and courier delivery"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 10 - Office Supplies &amp; Postage"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_TRAVEL_TRANSPORTATION"/>
+            <column name="name" value="OPEX - Travel &amp; Transportation"/>
+            <column name="description" value="Vehicle fuel, toll fees, parking, public transit, airfare, and lodging"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 11 - Travel &amp; Transportation"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_INSURANCE"/>
+            <column name="name" value="OPEX - Insurance Premiums"/>
+            <column name="description" value="Property, commercial general liability, fire, and fleet vehicle insurance"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 12 - Insurance"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_REPAIRS_MAINTENANCE"/>
+            <column name="name" value="OPEX - Repairs &amp; Maintenance"/>
+            <column name="description" value="Facility servicing, equipment repairs, and IT hardware maintenance"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 13 - Repairs &amp; Maintenance"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_INTEREST_EXPENSE"/>
+            <column name="name" value="Non-Operating - Interest Expense"/>
+            <column name="description" value="Bank loans and financing costs (subject to BIR interest arbitrage deduction)"/>
+            <column name="pnl_category" value="OTHER_EXPENSE"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 14 - Interest Expense"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="DED_MISC_OPERATING_EXPENSE"/>
+            <column name="name" value="OPEX - Miscellaneous Operating Expenses"/>
+            <column name="description" value="Sundry business operational expenses with supporting official receipts"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Schedule 2 Line 15 - Other Operating Expenses"/>
+            <column name="is_deductible" valueBoolean="true"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="tax_categories">
+            <column name="code" value="EXP_NON_DEDUCTIBLE"/>
+            <column name="name" value="OPEX - Non-Deductible / Personal Expenses"/>
+            <column name="description" value="Tracked in P&amp;L for accurate cash flow, excluded from tax deduction schedules"/>
+            <column name="pnl_category" value="OPEX"/>
+            <column name="bir_schedule_line" value="Non-Deductible (Excluded)"/>
+            <column name="is_deductible" valueBoolean="false"/>
+            <column name="is_default" valueBoolean="true"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+    <!-- Seed Initial Smart Vendor Rules -->
+    <changeSet author="saavy" id="vendor-rules-seed-001">
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="MERALCO"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Electricity utility routing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="PLDT"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Telecommunications and fiber internet"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="GLOBE"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Telecom and corporate mobile plans"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="MANILA WATER"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Water utilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="MAYNILAD"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Water utilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="AWS"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_UTILITIES_COMMUNICATION')"/>
+            <column name="notes" value="Cloud infrastructure &amp; hosting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="GOOGLE"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_ADVERTISING_PROMOTION')"/>
+            <column name="notes" value="Google Workspace / Ads"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="META"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_ADVERTISING_PROMOTION')"/>
+            <column name="notes" value="Facebook / Instagram Advertising"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="SHOPEE"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_OFFICE_SUPPLIES')"/>
+            <column name="notes" value="Office consumables &amp; supplies"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="PETRON"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_TRAVEL_TRANSPORTATION')"/>
+            <column name="notes" value="Vehicle fuel and transport"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="vendor_rules">
+            <column name="pattern" value="SHELL"/>
+            <column name="tax_category_id" valueComputed="(SELECT id FROM tax_categories WHERE code = 'DED_TRAVEL_TRANSPORTATION')"/>
+            <column name="notes" value="Vehicle fuel and transport"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

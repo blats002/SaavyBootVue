@@ -35,6 +35,19 @@ public class Invoice {
     @JoinColumn(name = "party_id")
     public Party party;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tax_category_id")
+    public TaxCategory taxCategory;
+
+    @Column(name = "cwt_2307_amount", precision = 38, scale = 2)
+    public BigDecimal cwt2307Amount = BigDecimal.ZERO;
+
+    @Column(name = "vat_status", length = 50)
+    public String vatStatus = "VAT_INCLUSIVE";
+
+    @Column(name = "is_deductible")
+    public Boolean isDeductible = true;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "invoice_status", length = 50)
