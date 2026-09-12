@@ -1,0 +1,1394 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Seed PnL Accounts (Chart of Accounts) -->
+    <changeSet author="saavy" id="pnl-seed-accounts-001" context="dev,demo,test">
+        <!-- REVENUE -->
+        <insert tableName="pnl_accounts">
+            <column name="code" value="4000"/>
+            <column name="name" value="Subscription Revenue (MRR/ARR)"/>
+            <column name="category" value="REVENUE"/>
+            <column name="subcategory" value="Recurring"/>
+            <column name="description" value="Software SaaS subscriptions"/>
+            <column name="sort_order" valueNumeric="10"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="pnl_accounts">
+            <column name="code" value="4100"/>
+            <column name="name" value="Professional Services &amp; Consulting"/>
+            <column name="category" value="REVENUE"/>
+            <column name="subcategory" value="Services"/>
+            <column name="description" value="Implementation and consulting revenue"/>
+            <column name="sort_order" valueNumeric="20"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <!-- COGS -->
+        <insert tableName="pnl_accounts">
+            <column name="code" value="5000"/>
+            <column name="name" value="Cloud Hosting &amp; Infrastructure"/>
+            <column name="category" value="COGS"/>
+            <column name="subcategory" value="Infrastructure"/>
+            <column name="description" value="AWS / GCP / Cloud computing costs"/>
+            <column name="sort_order" valueNumeric="30"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="pnl_accounts">
+            <column name="code" value="5100"/>
+            <column name="name" value="Payment Gateway Fees"/>
+            <column name="category" value="COGS"/>
+            <column name="subcategory" value="Merchant Fees"/>
+            <column name="description" value="Stripe, PayPal, merchant interchange fees"/>
+            <column name="sort_order" valueNumeric="40"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <!-- OPEX -->
+        <insert tableName="pnl_accounts">
+            <column name="code" value="6000"/>
+            <column name="name" value="Engineering &amp; Product Salaries"/>
+            <column name="category" value="OPEX"/>
+            <column name="subcategory" value="R&amp;D"/>
+            <column name="description" value="Software engineering and QA compensation"/>
+            <column name="sort_order" valueNumeric="50"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="pnl_accounts">
+            <column name="code" value="6100"/>
+            <column name="name" value="Sales &amp; Digital Marketing"/>
+            <column name="category" value="OPEX"/>
+            <column name="subcategory" value="Sales &amp; Marketing"/>
+            <column name="description" value="Google/Meta Ads, campaign expenses, sales team"/>
+            <column name="sort_order" valueNumeric="60"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="pnl_accounts">
+            <column name="code" value="6200"/>
+            <column name="name" value="Office Rent &amp; Facilities"/>
+            <column name="category" value="OPEX"/>
+            <column name="subcategory" value="G&amp;A"/>
+            <column name="description" value="Office leases, utilities, coworking spaces"/>
+            <column name="sort_order" valueNumeric="70"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+        <insert tableName="pnl_accounts">
+            <column name="code" value="6300"/>
+            <column name="name" value="Legal, Accounting &amp; Compliance"/>
+            <column name="category" value="OPEX"/>
+            <column name="subcategory" value="G&amp;A"/>
+            <column name="description" value="Audit fees, corporate legal, tax compliance"/>
+            <column name="sort_order" valueNumeric="80"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+
+        <!-- TAX -->
+        <insert tableName="pnl_accounts">
+            <column name="code" value="7000"/>
+            <column name="name" value="Corporate Income Tax"/>
+            <column name="category" value="TAX"/>
+            <column name="subcategory" value="Taxes"/>
+            <column name="description" value="Estimated income tax provisions"/>
+            <column name="sort_order" valueNumeric="90"/>
+            <column name="active" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <!-- Seed Sample Ledger Data for 2025 (Full Year) & 2026 Q1 Demo -->
+    <changeSet author="saavy" id="pnl-seed-ledger-001" context="dev,demo,test">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM pnl_ledger_entries</sqlCheck>
+        </preConditions>
+        <!-- 2025-01 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="32000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-JAN25"/>
+            <column name="description" value="2025-01 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="4000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-JAN25"/>
+            <column name="description" value="2025-01 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="3800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-JAN25"/>
+            <column name="description" value="2025-01 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="1000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-JAN25"/>
+            <column name="description" value="2025-01 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="18000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-JAN25"/>
+            <column name="description" value="2025-01 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="4200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-JAN25"/>
+            <column name="description" value="2025-01 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-JAN25"/>
+            <column name="description" value="2025-01 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="600.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-JAN25"/>
+            <column name="description" value="2025-01 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-01-31"/>
+            <column name="amount" valueNumeric="1500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-JAN25"/>
+            <column name="description" value="2025-01 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-02 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="33500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-FEB25"/>
+            <column name="description" value="2025-02 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="3500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-FEB25"/>
+            <column name="description" value="2025-02 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="3900.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-FEB25"/>
+            <column name="description" value="2025-02 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="1050.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-FEB25"/>
+            <column name="description" value="2025-02 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="18000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-FEB25"/>
+            <column name="description" value="2025-02 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="4500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-FEB25"/>
+            <column name="description" value="2025-02 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-FEB25"/>
+            <column name="description" value="2025-02 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="700.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-FEB25"/>
+            <column name="description" value="2025-02 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-02-28"/>
+            <column name="amount" valueNumeric="1600.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-FEB25"/>
+            <column name="description" value="2025-02 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-03 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="35000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-MAR25"/>
+            <column name="description" value="2025-03 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="5000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-MAR25"/>
+            <column name="description" value="2025-03 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="4000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-MAR25"/>
+            <column name="description" value="2025-03 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="1100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-MAR25"/>
+            <column name="description" value="2025-03 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="19000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-MAR25"/>
+            <column name="description" value="2025-03 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="4800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-MAR25"/>
+            <column name="description" value="2025-03 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-MAR25"/>
+            <column name="description" value="2025-03 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-MAR25"/>
+            <column name="description" value="2025-03 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-03-31"/>
+            <column name="amount" valueNumeric="1800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-MAR25"/>
+            <column name="description" value="2025-03 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-04 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="36200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-APR25"/>
+            <column name="description" value="2025-04 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="4500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-APR25"/>
+            <column name="description" value="2025-04 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="4100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-APR25"/>
+            <column name="description" value="2025-04 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="1150.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-APR25"/>
+            <column name="description" value="2025-04 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="19000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-APR25"/>
+            <column name="description" value="2025-04 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="5000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-APR25"/>
+            <column name="description" value="2025-04 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-APR25"/>
+            <column name="description" value="2025-04 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="650.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-APR25"/>
+            <column name="description" value="2025-04 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-04-30"/>
+            <column name="amount" valueNumeric="1900.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-APR25"/>
+            <column name="description" value="2025-04 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-05 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="37500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-MAY25"/>
+            <column name="description" value="2025-05 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="6000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-MAY25"/>
+            <column name="description" value="2025-05 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="4200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-MAY25"/>
+            <column name="description" value="2025-05 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="1200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-MAY25"/>
+            <column name="description" value="2025-05 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="19500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-MAY25"/>
+            <column name="description" value="2025-05 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="5200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-MAY25"/>
+            <column name="description" value="2025-05 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-MAY25"/>
+            <column name="description" value="2025-05 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="750.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-MAY25"/>
+            <column name="description" value="2025-05 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-05-31"/>
+            <column name="amount" valueNumeric="2000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-MAY25"/>
+            <column name="description" value="2025-05 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-06 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="38800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-JUN25"/>
+            <column name="description" value="2025-06 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="5200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-JUN25"/>
+            <column name="description" value="2025-06 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="4300.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-JUN25"/>
+            <column name="description" value="2025-06 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="1250.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-JUN25"/>
+            <column name="description" value="2025-06 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="19500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-JUN25"/>
+            <column name="description" value="2025-06 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="5400.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-JUN25"/>
+            <column name="description" value="2025-06 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-JUN25"/>
+            <column name="description" value="2025-06 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-JUN25"/>
+            <column name="description" value="2025-06 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-06-30"/>
+            <column name="amount" valueNumeric="2100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-JUN25"/>
+            <column name="description" value="2025-06 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-07 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="39900.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-JUL25"/>
+            <column name="description" value="2025-07 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="6500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-JUL25"/>
+            <column name="description" value="2025-07 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="4400.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-JUL25"/>
+            <column name="description" value="2025-07 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="1300.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-JUL25"/>
+            <column name="description" value="2025-07 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="20000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-JUL25"/>
+            <column name="description" value="2025-07 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="5500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-JUL25"/>
+            <column name="description" value="2025-07 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-JUL25"/>
+            <column name="description" value="2025-07 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="700.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-JUL25"/>
+            <column name="description" value="2025-07 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-07-31"/>
+            <column name="amount" valueNumeric="2200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-JUL25"/>
+            <column name="description" value="2025-07 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-08 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="41000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-AUG25"/>
+            <column name="description" value="2025-08 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="4800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-AUG25"/>
+            <column name="description" value="2025-08 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="4500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-AUG25"/>
+            <column name="description" value="2025-08 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="1320.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-AUG25"/>
+            <column name="description" value="2025-08 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="20000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-AUG25"/>
+            <column name="description" value="2025-08 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="5700.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-AUG25"/>
+            <column name="description" value="2025-08 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-AUG25"/>
+            <column name="description" value="2025-08 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="850.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-AUG25"/>
+            <column name="description" value="2025-08 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-08-31"/>
+            <column name="amount" valueNumeric="2300.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-AUG25"/>
+            <column name="description" value="2025-08 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-09 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="42200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-SEP25"/>
+            <column name="description" value="2025-09 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="7000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-SEP25"/>
+            <column name="description" value="2025-09 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="4600.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-SEP25"/>
+            <column name="description" value="2025-09 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="1350.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-SEP25"/>
+            <column name="description" value="2025-09 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="20500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-SEP25"/>
+            <column name="description" value="2025-09 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="5800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-SEP25"/>
+            <column name="description" value="2025-09 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-SEP25"/>
+            <column name="description" value="2025-09 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="900.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-SEP25"/>
+            <column name="description" value="2025-09 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-09-30"/>
+            <column name="amount" valueNumeric="2400.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-SEP25"/>
+            <column name="description" value="2025-09 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-10 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="43000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-OCT25"/>
+            <column name="description" value="2025-10 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="5500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-OCT25"/>
+            <column name="description" value="2025-10 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="4700.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-OCT25"/>
+            <column name="description" value="2025-10 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="1380.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-OCT25"/>
+            <column name="description" value="2025-10 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="20500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-OCT25"/>
+            <column name="description" value="2025-10 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="6000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-OCT25"/>
+            <column name="description" value="2025-10 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-OCT25"/>
+            <column name="description" value="2025-10 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="750.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-OCT25"/>
+            <column name="description" value="2025-10 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-10-31"/>
+            <column name="amount" valueNumeric="2450.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-OCT25"/>
+            <column name="description" value="2025-10 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-11 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="43800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-NOV25"/>
+            <column name="description" value="2025-11 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="6200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-NOV25"/>
+            <column name="description" value="2025-11 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="4800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-NOV25"/>
+            <column name="description" value="2025-11 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="1400.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-NOV25"/>
+            <column name="description" value="2025-11 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="21000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-NOV25"/>
+            <column name="description" value="2025-11 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="6100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-NOV25"/>
+            <column name="description" value="2025-11 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-NOV25"/>
+            <column name="description" value="2025-11 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-NOV25"/>
+            <column name="description" value="2025-11 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-11-30"/>
+            <column name="amount" valueNumeric="2500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-NOV25"/>
+            <column name="description" value="2025-11 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2025-12 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="44500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-DEC25"/>
+            <column name="description" value="2025-12 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="7500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-DEC25"/>
+            <column name="description" value="2025-12 Professional Services &amp; Consulting"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="4900.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-DEC25"/>
+            <column name="description" value="2025-12 Cloud Hosting &amp; Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="1420.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-DEC25"/>
+            <column name="description" value="2025-12 Stripe &amp; Payment Gateway Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="21000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-DEC25"/>
+            <column name="description" value="2025-12 Engineering &amp; Product Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="6200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-DEC25"/>
+            <column name="description" value="2025-12 Sales &amp; Growth Marketing"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="3200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-DEC25"/>
+            <column name="description" value="2025-12 HQ Office Lease &amp; Facilities"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="1100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-DEC25"/>
+            <column name="description" value="2025-12 Legal, Audit &amp; Advisory Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2025-12-31"/>
+            <column name="amount" valueNumeric="2600.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-DEC25"/>
+            <column name="description" value="2025-12 Estimated Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2026-01 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="45000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-JAN26"/>
+            <column name="description" value="2026-01 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2026-01-20"/>
+            <column name="amount" valueNumeric="8500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-JAN26"/>
+            <column name="description" value="Enterprise Onboarding Package"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="5200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-JAN26"/>
+            <column name="description" value="AWS Cloud Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="1450.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-JAN26"/>
+            <column name="description" value="Stripe Processing Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="22000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-JAN26"/>
+            <column name="description" value="Engineering Team Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="6500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-JAN26"/>
+            <column name="description" value="Google Search Ads &amp; Sponsorships"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2026-01-01"/>
+            <column name="amount" valueNumeric="3500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-JAN26"/>
+            <column name="description" value="HQ Office Lease"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2026-01-15"/>
+            <column name="amount" valueNumeric="1200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-JAN26"/>
+            <column name="description" value="Quarterly Legal Retainer"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2026-01-31"/>
+            <column name="amount" valueNumeric="2700.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-JAN26"/>
+            <column name="description" value="Estimated Corporate Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <!-- 2026-02 -->
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4000')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="49500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MRR-FEB26"/>
+            <column name="description" value="February 2026 Monthly Recurring Revenue"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='4100')"/>
+            <column name="entry_date" value="2026-02-18"/>
+            <column name="amount" valueNumeric="6000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="SRV-FEB26"/>
+            <column name="description" value="Custom Integration Services"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5000')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="5400.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="AWS-FEB26"/>
+            <column name="description" value="AWS Cloud Infrastructure"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='5100')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="1550.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="STRP-FEB26"/>
+            <column name="description" value="Stripe Processing Fees"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6000')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="22000.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="PAY-RD-FEB26"/>
+            <column name="description" value="Engineering Team Payroll"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6100')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="7200.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="MKT-FEB26"/>
+            <column name="description" value="Digital Growth Campaigns"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6200')"/>
+            <column name="entry_date" value="2026-02-01"/>
+            <column name="amount" valueNumeric="3500.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="RENT-FEB26"/>
+            <column name="description" value="HQ Office Lease"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='6300')"/>
+            <column name="entry_date" value="2026-02-15"/>
+            <column name="amount" valueNumeric="800.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="LGL-FEB26"/>
+            <column name="description" value="Accounting and Bookkeeping Advisory"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="pnl_ledger_entries">
+            <column name="account_id" valueComputed="(SELECT id FROM pnl_accounts WHERE code='7000')"/>
+            <column name="entry_date" value="2026-02-28"/>
+            <column name="amount" valueNumeric="3100.00"/>
+            <column name="currency" value="USD"/>
+            <column name="entity_name" value="Main Corp"/>
+            <column name="reference_id" value="TAX-FEB26"/>
+            <column name="description" value="Estimated Corporate Income Tax Provision"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

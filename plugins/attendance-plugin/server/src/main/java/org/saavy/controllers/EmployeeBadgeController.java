@@ -29,8 +29,8 @@ public class EmployeeBadgeController extends BaseController<EmployeeBadge, Emplo
     public ResponseEntity<AvatarFileDTO> uploadAvatar(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
-    ) {
-        try {
+    )  {
+            try {
             AvatarFileDTO avatarDTO = employeeBadgeService.uploadAvatar(id, file);
             return ResponseEntity.ok(avatarDTO);
         } catch (Exception e) {

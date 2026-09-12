@@ -74,7 +74,7 @@
             <column name="role_id" valueNumeric="1"/>
         </insert>
     </changeSet>
-    <changeSet author="saavy" id="security-seed-003">
+    <changeSet author="saavy" id="security-seed-003" context="dev,demo,test">
         <insert tableName="users">
             <column name="username" value="user"/>
             <!-- password is user123 (BCrypt encoded) -->

@@ -101,7 +101,11 @@ const props = defineProps({
         type: [Function, Boolean],
         default: null
     },
-    customButtons: {
+    rowCustomButtons: {
+        type: Array,
+        default: () => []
+    },
+    panelCustomButtons: {
         type: Array,
         default: () => []
     }
@@ -112,7 +116,7 @@ const isRoleAuthorized = computed(() => {
     return AuthService.hasRole(props.role);
 });
 
-const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted', 'record-double-click', 'record-detail']);
+const emit = defineEmits(['record-selected', 'records-loaded', 'record-saved', 'record-deleted', 'record-double-click', 'record-detail', 'panel-button-click']);
 
 const toast = useToast();
 
@@ -132,7 +136,7 @@ const recordDialog = ref(false);
 const deleteRecordDialog = ref(false);
 const deleteRecordsDialog = ref(false);
 
-const leftToolBarButtons = [
+const panelLeftToolBarButtons = [
     {
         key: 'refresh',
         label: 'Refresh',
@@ -518,8 +522,8 @@ const shouldShowSelectionColumn = () => {
     return Boolean(props.showToolbar);
 };
 
-const getLeftToolBarButtons = () => {
-    return leftToolBarButtons
+const getPanelLeftToolBarButtons = () => {
+    const standardButtons = panelLeftToolBarButtons
         .filter((button) => {
             if (button.key === 'new' && !shouldShowNewButton()) {
                 return false;
@@ -541,6 +545,8 @@ const getLeftToolBarButtons = () => {
 
             return button;
         });
+
+    return [...standardButtons, ...(props.panelCustomButtons || [])];
 };
 
 const handlePanelButtonClick = (button) => {
@@ -551,11 +557,19 @@ const handlePanelButtonClick = (button) => {
 
     if (button.key === 'refresh') {
         refreshRecords();
+        return;
     }
 
     if (button.key === 'delete-selected') {
         confirmDeleteSelected();
+        return;
     }
+
+    if (typeof button.onClick === 'function') {
+        button.onClick(records.value);
+    }
+
+    emit('panel-button-click', button);
 };
 
 const deleteSelectedRecords = async () => {
@@ -722,7 +736,7 @@ const dataTableRef = ref();
 <template>
     <div v-if="isRoleAuthorized" class="grid">
         <div class="col-12 h-full flex flex-column">
-            <GenericPanel class="flex-1" :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getLeftToolBarButtons()" @button-click="handlePanelButtonClick">
+            <GenericPanel class="flex-1" :showToolbar="showToolbar" :bodyType="panel" :title="title" :leftToolBarButtons="getPanelLeftToolBarButtons()" @button-click="handlePanelButtonClick">
                 <DataTable
                     ref="dataTableRef"
                     :value="records"
@@ -760,13 +774,13 @@ const dataTableRef = ref();
                             <Button v-if="isRowDeletable(slotProps.data)" icon="pi pi-trash" v-tooltip.top="'Delete'" class="p-button-rounded p-button-danger mr-2" @click="confirmDeleteRecord(slotProps.data)" />
                             <Button v-if="showDetailButton" :icon="detailButtonIcon" v-tooltip.top="detailButtonTooltip" :class="detailButtonClass" @click="handleDetailButtonClick(slotProps.data)" />
                             <Button
-                                v-for="(customButton, index) in customButtons"
-                                :key="customButton.key || index"
-                                :icon="customButton.icon"
-                                :severity="customButton.severity"
-                                v-tooltip.top="customButton.tooltip || customButton.label"
-                                :class="customButton.class || 'p-button-rounded mr-2'"
-                                @click="customButton.onClick ? customButton.onClick(slotProps.data) : null"
+                                v-for="(rowCustomButton, index) in rowCustomButtons"
+                                :key="rowCustomButton.key || index"
+                                :icon="rowCustomButton.icon"
+                                :severity="rowCustomButton.severity"
+                                v-tooltip.top="rowCustomButton.tooltip || rowCustomButton.label"
+                                :class="rowCustomButton.class || 'p-button-rounded mr-2'"
+                                @click="rowCustomButton.onClick ? rowCustomButton.onClick(slotProps.data) : null"
                             />
                         </template>
                     </Column>
